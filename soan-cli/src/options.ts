@@ -25,6 +25,7 @@ Core options:
       --num-lines <integer>         Target number of vertical lines.
       --char-spacing <integer>      Extra character spacing in 1/100 character units.
       --line-spacing <integer>      Extra line spacing in 1/100 character units.
+      --old-japanese, --kobun       Preserve historical surface text instead of modern reading conversion.
       --margin <px>                 Set all margins when individual margins are omitted.
       --margin-top <px>             Top margin. Default: 100
       --margin-bottom <px>          Bottom margin. Default: 100
@@ -43,8 +44,8 @@ Core options:
       --version                     Print version.
       --help                        Print this help.
 
-Unsupported in v2.0.0 compatibility CLI:
-  Old Japanese / kobun morphological mode and PixiJS interactive editing.
+Unsupported in v2.0.0 CLI package:
+  PixiJS interactive editing.
 `);
 }
 
@@ -71,6 +72,9 @@ const argsConfig = {
     'char-spacing': { type: 'string', description: '字間微調整（charSpacingの別名）' },
     lineSpacing: { type: 'string', default: '0', description: '行間微調整（1/100文字単位）' },
     'line-spacing': { type: 'string', description: '行間微調整（lineSpacingの別名）' },
+    oldJapanese: { type: 'boolean', default: false, description: '古文表記保持モード。kuromojiの読み変換を避け、原文表記を使う' },
+    'old-japanese': { type: 'boolean', description: '古文表記保持モード（oldJapaneseの別名）' },
+    kobun: { type: 'boolean', description: '古文表記保持モード（oldJapaneseの別名）' },
     margin: { type: 'string', description: '天地左右の余白（px）。個別指定がない箇所へ適用' },
     marginTop: { type: 'string', default: '100', description: '天の余白（px）' },
     'margin-top': { type: 'string', description: '天の余白（marginTopの別名）' },
@@ -197,6 +201,8 @@ export function readCliOptions(): CliOptions | undefined {
   const parsedNumLines = typeof numLines === 'string' ? parseInteger('numLines', numLines) : undefined;
   const parsedCharSpacing = parseInteger('charSpacing', charSpacing);
   const parsedLineSpacing = parseInteger('lineSpacing', lineSpacing);
+  const morphologyMode =
+    values.oldJapanese === true || values['old-japanese'] === true || values.kobun === true ? 'old-japanese' : 'modern';
   const parsedMarginTop = parseInteger('marginTop', marginTop);
   const parsedMarginBottom = parseInteger('marginBottom', marginBottom);
   const parsedMarginLeft = parseInteger('marginLeft', marginLeft);
@@ -237,6 +243,7 @@ export function readCliOptions(): CliOptions | undefined {
     numLines: parsedNumLines,
     charSpacing: parsedCharSpacing,
     lineSpacing: parsedLineSpacing,
+    morphologyMode,
     fontFamily,
     fontColor,
     scale: parsedScale,

@@ -26,6 +26,7 @@ function metadataFixture(): GenerationMetadata {
       height: 'auto',
       charSpacing: 0,
       lineSpacing: 0,
+      morphologyMode: 'modern',
       fontFamily: 'serif',
       fontColor: '#000000',
       scale: 1,

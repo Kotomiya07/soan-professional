@@ -22,6 +22,7 @@ function soanConfigFromOptions(options: CliOptions) {
     numLines: options.numLines,
     charSpacing: options.charSpacing,
     lineSpacing: options.lineSpacing,
+    morphologyMode: options.morphologyMode,
     fontFamily: options.fontFamily,
     fontColor: options.fontColor,
     scale: options.scale,
@@ -68,6 +69,7 @@ export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): Soa
     numLines: metadata.soanConfig.numLines,
     charSpacing: metadata.soanConfig.charSpacing,
     lineSpacing: metadata.soanConfig.lineSpacing,
+    morphologyMode: metadata.soanConfig.morphologyMode,
     professionalDirectives: metadata.directives,
     professionalBoundaries: metadata.boundaries,
   };

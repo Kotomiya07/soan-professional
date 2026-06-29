@@ -31,6 +31,8 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - v1.2 CLI 組版オプションとして `--num-lines`, `--char-spacing`, `--line-spacing` を追加。`--num-lines` はレンダリング後の softLine 数を検証し、正確に満たせない場合は出力前に失敗する
 - JPEG 出力へ Professional metadata JSON を APP1 XMP として埋め込み。PNG は sidecar JSON を正式記録とし、`xmp.embedded: false` と理由を記録
 - root `pixi run check` を test/build/smoke の release gate に更新し、package-level `npm run check` と `prepack` も追加
+- `--old-japanese` / `--kobun` を古文表記保持モードとして追加。kuromoji の読み変換を避け、原文表記と `/` 手動境界を使って既存 renderer に渡す
+- `［ID］` はロード済み dataset の `data` 全体からも逆引きし、本文に同じ文字が出ていない ID でも選択できるようにした
 - `soan-cli/src`, `soan-cli/test`, `package/soan/soan.d.ts` から明示的な `any` 型を除去
 
 検証済み:
@@ -46,12 +48,16 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `node dist/cli.js --text 'か［加］/な' --gamma 1.1 ...`: JPEG bytes に `http://ns.adobe.com/xap/1.0/` XMP namespace が入り、sidecar の `xmp.embedded` が `true` になることを確認
 - `npm --cache ./tmp/npm-cache publish --dry-run`: bin path 自動補正警告を解消後、dry-run publish が成功（未ログイン警告のみ）
 - packed tarball を `/private/tmp/soan-pack-test.DbH3Ja` へ install し、`npx soan --version`、`npx soan --text 'か［加］/な' --num-lines 1 ...`、JPEG XMP namespace、sidecar `xmp.embedded: true` を確認
+- `node dist/cli.js --text 'か［1］' ...`: dataset `001.json` の本文非依存 ID `000001` が `selectedGlyphs[0].glyphId === 1` として選択されることを確認
+- `node dist/cli.js --text 'けふ/こそ' --old-japanese ...`: metadata に `morphologyMode: old-japanese` が記録され、`けふ` / `こそ` の表記保持と手動境界が反映されることを確認
+- packed tarball を `/private/tmp/soan-pack-final.cVrjHw` へ install し、`npx soan --text 'か［1］' ...` と `npx soan --text 'けふ/こそ' --kobun ...` が成功。tarball 経由でも dataset 全体 ID 逆引きと古文表記保持モードが動作することを確認
 
 現時点の制限:
 - Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする
-- `［ID］` はロード済みデータセット URL と同梱 fallback 画像 URL から解決する。未ロードの外部 dataset 全体を ID 逆引きする汎用 index は未実装
+- `［ID］` は設定済み dataset と同梱 fallback 画像から解決する。未指定 dataset をネットワーク探索する汎用 global registry は持たない
 - sidecar JSON が canonical metadata。JPEG XMP は同じ metadata packet の埋め込みを行うが、PNG は sidecar のみ
-- 古文モードと PixiJS インタラクティブ編集は CLI v2.0.0 互換リリースの範囲外。古文モードは MeCab/中古和文 UniDic 等の実 analyzer がない限り fake flag を出さない
+- `--old-japanese` は表記保持の互換モードであり、MeCab/中古和文 UniDic 連携ではない
+- PixiJS インタラクティブ編集は CLI package の範囲外
 
 ## 概要
 

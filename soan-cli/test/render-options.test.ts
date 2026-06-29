@@ -28,6 +28,7 @@ function metadataFixture(): GenerationMetadata {
       numLines: 3,
       charSpacing: 20,
       lineSpacing: 30,
+      morphologyMode: 'old-japanese',
       fontFamily: 'serif',
       fontColor: '#000000',
       scale: 1,
@@ -50,6 +51,7 @@ describe('soanRenderOptionsFromMetadata', () => {
     expect(options.numLines).toBe(3);
     expect(options.charSpacing).toBe(20);
     expect(options.lineSpacing).toBe(30);
+    expect(options.morphologyMode).toBe('old-japanese');
     expect(options.force).toBe(true);
   });
 });

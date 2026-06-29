@@ -9,6 +9,7 @@ The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Prof
 - deterministic `--seed` by temporarily replacing `Math.random` during rendering
 - gamma post-processing with `--gamma`
 - v1.2 layout controls: `--num-lines`, `--char-spacing`, and `--line-spacing`
+- old Japanese surface-preserving mode with `--old-japanese` / `--kobun`
 - sidecar reproducibility metadata with `--metadata-output`, including selected glyph URLs and parsed glyph IDs
 - JPEG XMP embedding of the same Professional metadata packet
 - pixi tasks for install, test, build, and smoke generation
@@ -69,4 +70,6 @@ The CLI treats generated JSON sidecars as the canonical Professional reproducibi
 
 When a Pro glyph directive is present, the compatibility renderer sets `renmenPriority` to `0` for that render. The upstream selector can otherwise choose multi-character renmen tokens before position-based directives are applied, which would make single-character `［字母］` / `［ID］` controls ambiguous.
 
-Old Japanese / kobun morphological mode and PixiJS interactive editing are not part of the v2.0.0 compatibility CLI. They require a separate analyzer/UI implementation rather than a faithful CLI flag over the Soan v1.1.0 renderer.
+`--old-japanese` / `--kobun` is a compatibility CLI mode for historical text: it preserves surface text instead of converting through kuromoji readings, and works with `/` manual boundaries for cases where the modern analyzer would be a poor fit. It is not a MeCab / Chuko-Wabun UniDic integration.
+
+PixiJS interactive editing is not part of the v2.0.0 CLI package.

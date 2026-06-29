@@ -4,6 +4,7 @@ export interface DatasetConfig {
 }
 
 export type OutputFormat = 'jpeg' | 'png';
+export type MorphologyMode = 'modern' | 'old-japanese';
 
 export interface ProDirectiveBase {
   readonly position: number;
@@ -47,6 +48,7 @@ export interface SoanConfig {
   numLines?: number;
   charSpacing: number;
   lineSpacing: number;
+  morphologyMode: MorphologyMode;
   fontFamily: string;
   fontColor: string;
   scale: number;
@@ -123,6 +125,7 @@ export interface SoanRenderOptions {
   numLines?: number;
   charSpacing?: number;
   lineSpacing?: number;
+  morphologyMode?: MorphologyMode;
   professionalDirectives?: readonly ProDirective[];
   professionalBoundaries?: readonly BoundaryDirective[];
 }
