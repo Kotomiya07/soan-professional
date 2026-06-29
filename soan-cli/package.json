@@ -10,7 +10,9 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "smoke": "node dist/cli.js --text \"サンプル［15338］/かな\" --seed 42 --gamma 1.1 --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force"
+    "smoke": "node dist/cli.js --text \"サンプル［15338］/かな\" --seed 42 --gamma 1.1 --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force",
+    "check": "npm run test && npm run build && npm run smoke",
+    "prepack": "npm run build"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
@@ -26,9 +28,9 @@
     "vitest": "^2.1.8"
   },
   "bin": {
-    "soan": "./dist/cli.js",
-    "soan-cli": "./dist/cli.js",
-    "soan-pro": "./dist/cli.js"
+    "soan": "dist/cli.js",
+    "soan-cli": "dist/cli.js",
+    "soan-pro": "dist/cli.js"
   },
   "files": [
     "dist",

@@ -4,7 +4,8 @@ import { writeMetadata } from './metadata.js';
 import { readCliOptions } from './options.js';
 import { ensureParentDirectory, writeImageBuffer } from './output.js';
 import { generateImage, soanConfigFromOptions } from './render.js';
-import type { GenerationMetadata, SelectedGlyphMetadata, SoanRenderedGlyph } from './types.js';
+import type { CliOptions, GenerationMetadata, SelectedGlyphMetadata, SoanRenderedGlyph } from './types.js';
+import { injectXmpMetadata } from './xmp.js';
 
 function glyphIdFromUrl(url: string): number | undefined {
   const fallbackMatch = url.match(/(?:^|\/)(\d+)-/);
@@ -29,6 +30,35 @@ function selectedGlyphsFromRenderedGlyphs(renderedGlyphs: readonly SoanRenderedG
   });
 }
 
+function assertNumLinesSatisfied(options: CliOptions, selectedGlyphs: readonly SelectedGlyphMetadata[]): void {
+  if (options.numLines === undefined) {
+    return;
+  }
+
+  const lineCount = new Set(selectedGlyphs.map((glyph) => glyph.softLine ?? glyph.line)).size;
+  if (lineCount !== options.numLines) {
+    throw new Error(
+      `--num-lines ${options.numLines} could not be satisfied exactly; rendered ${lineCount} lines. ` +
+        'Adjust --chars-per-line manually for this text.',
+    );
+  }
+}
+
+function optionsWithNumLinesApplied(options: CliOptions, renderText: string): CliOptions {
+  if (options.numLines === undefined) {
+    return options;
+  }
+
+  const renderLength = Math.max(1, Array.from(renderText).length);
+  return {
+    ...options,
+    // Soan's compatibility layout starts a new soft line when the next glyph
+    // reaches the line-height threshold, so an exact length / lines division
+    // needs one character of headroom to avoid producing an extra final line.
+    charsPerLine: Math.max(1, Math.ceil((renderLength + 1) / options.numLines)),
+  };
+}
+
 async function main(): Promise<void> {
   if (process.argv.includes('--version') || process.argv.includes('--help') || process.argv.includes('-h')) {
     readCliOptions();
@@ -42,6 +72,7 @@ async function main(): Promise<void> {
   }
 
   const parsed = parseExtendedText(options.text);
+  const effectiveOptions = optionsWithNumLinesApplied(options, parsed.renderText);
   const metadataBase: GenerationMetadata = {
     engine: 'soan-v1.1.0-compat',
     professionalSlice: true,
@@ -52,20 +83,31 @@ async function main(): Promise<void> {
     format: options.format,
     directives: parsed.directives,
     boundaries: parsed.boundaries,
-    soanConfig: soanConfigFromOptions(options),
+    xmp: { embedded: false, reason: 'pending-render' },
+    soanConfig: soanConfigFromOptions(effectiveOptions),
     generatedAt: new Date().toISOString(),
   };
 
   ensureParentDirectory(options.output);
   ensureParentDirectory(options.metadataOutput);
 
-  const generated = await generateImage(options, metadataBase);
-  const metadata: GenerationMetadata = {
+  const generated = await generateImage(effectiveOptions, metadataBase);
+  const selectedGlyphs = selectedGlyphsFromRenderedGlyphs(generated.renderedGlyphs ?? []);
+  assertNumLinesSatisfied(options, selectedGlyphs);
+  const metadataWithoutXmpStatus: GenerationMetadata = {
     ...metadataBase,
     renderedGlyphs: generated.renderedGlyphs,
-    selectedGlyphs: selectedGlyphsFromRenderedGlyphs(generated.renderedGlyphs ?? []),
+    selectedGlyphs,
+    image: generated.image,
   };
-  const buffer = generated.buffer;
+  const metadata: GenerationMetadata = {
+    ...metadataWithoutXmpStatus,
+    xmp:
+      options.format === 'jpeg'
+        ? { embedded: true }
+        : { embedded: false, reason: 'PNG output stores Professional metadata in the JSON sidecar' },
+  };
+  const buffer = options.format === 'jpeg' ? injectXmpMetadata(generated.buffer, metadata) : generated.buffer;
   writeImageBuffer(options.output, buffer, options.force, options.format);
   writeMetadata(options.metadataOutput, metadata);
 }

@@ -13,6 +13,7 @@ function metadataFixture(): GenerationMetadata {
     format: 'jpeg',
     directives: [{ kind: 'id', position: 0, raw: '15338', id: 15338 }],
     boundaries: [{ position: 1 }],
+    xmp: { embedded: true },
     soanConfig: {
       datasets: [{ url: 'http://codh.rois.ac.jp/soan/dataset/001.json' }],
       allowUnavailableChar: false,
@@ -24,6 +25,9 @@ function metadataFixture(): GenerationMetadata {
       marginLeft: 100,
       marginRight: 100,
       height: 'auto',
+      numLines: 3,
+      charSpacing: 20,
+      lineSpacing: 30,
       fontFamily: 'serif',
       fontColor: '#000000',
       scale: 1,
@@ -43,6 +47,9 @@ describe('soanRenderOptionsFromMetadata', () => {
     expect(options.professionalDirectives).toBe(metadata.directives);
     expect(options.professionalBoundaries).toBe(metadata.boundaries);
     expect(options.renmenPriority).toBe(0);
+    expect(options.numLines).toBe(3);
+    expect(options.charSpacing).toBe(20);
+    expect(options.lineSpacing).toBe(30);
     expect(options.force).toBe(true);
   });
 });

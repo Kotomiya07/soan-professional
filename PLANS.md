@@ -28,6 +28,9 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `selectedGlyphs` metadata を追加し、選択 glyph URL・位置・jibo・URLから抽出できる glyph ID を記録
 - `soan-professional-cli@2.0.0` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
 - `--version`, 安定した `--help`, kebab-case aliases, `--margin`, `--font-family`, 数値 range validation を追加
+- v1.2 CLI 組版オプションとして `--num-lines`, `--char-spacing`, `--line-spacing` を追加。`--num-lines` はレンダリング後の softLine 数を検証し、正確に満たせない場合は出力前に失敗する
+- JPEG 出力へ Professional metadata JSON を APP1 XMP として埋め込み。PNG は sidecar JSON を正式記録とし、`xmp.embedded: false` と理由を記録
+- root `pixi run check` を test/build/smoke の release gate に更新し、package-level `npm run check` と `prepack` も追加
 - `soan-cli/src`, `soan-cli/test`, `package/soan/soan.d.ts` から明示的な `any` 型を除去
 
 検証済み:
@@ -39,12 +42,16 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `npm --prefix soan-cli audit --omit=dev`: production dependency vulnerabilities 0
 - `npm --cache ./tmp/npm-cache pack --dry-run`: tarball contents and bundled `soan` dependency checked
 - packed tarball を `/private/tmp/soan-pack-test.*` へ install し、`npx soan --version` と `npx soan --text 'か［加］/な' ...` が成功、metadata の先頭 glyph が jibo `加` になることを確認
+- `node dist/cli.js --text 'いろはにほへとちりぬるを' --num-lines 3 --char-spacing 20 --line-spacing 30 ...`: `selectedGlyphs` の softLine が 3 本になり、画像サイズ・組版設定が sidecar に記録されることを確認
+- `node dist/cli.js --text 'か［加］/な' --gamma 1.1 ...`: JPEG bytes に `http://ns.adobe.com/xap/1.0/` XMP namespace が入り、sidecar の `xmp.embedded` が `true` になることを確認
+- `npm --cache ./tmp/npm-cache publish --dry-run`: bin path 自動補正警告を解消後、dry-run publish が成功（未ログイン警告のみ）
+- packed tarball を `/private/tmp/soan-pack-test.DbH3Ja` へ install し、`npx soan --version`、`npx soan --text 'か［加］/な' --num-lines 1 ...`、JPEG XMP namespace、sidecar `xmp.embedded: true` を確認
 
 現時点の制限:
 - Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする
 - `［ID］` はロード済みデータセット URL と同梱 fallback 画像 URL から解決する。未ロードの外部 dataset 全体を ID 逆引きする汎用 index は未実装
-- XMPへPro metadataを直接埋め込む代わりに sidecar JSON を正式な再現性出力としている
-- 古文モード、PixiJS インタラクティブ編集、v1.2 改良組版の `numLines` / `charSpacing` / `lineSpacing` は CLI 公開候補の範囲外として未実装
+- sidecar JSON が canonical metadata。JPEG XMP は同じ metadata packet の埋め込みを行うが、PNG は sidecar のみ
+- 古文モードと PixiJS インタラクティブ編集は CLI v2.0.0 互換リリースの範囲外。古文モードは MeCab/中古和文 UniDic 等の実 analyzer がない限り fake flag を出さない
 
 ## 概要
 

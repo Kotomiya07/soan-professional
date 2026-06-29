@@ -19,6 +19,9 @@ function soanConfigFromOptions(options: CliOptions) {
     marginLeft: options.marginLeft,
     marginRight: options.marginRight,
     height: options.height,
+    numLines: options.numLines,
+    charSpacing: options.charSpacing,
+    lineSpacing: options.lineSpacing,
     fontFamily: options.fontFamily,
     fontColor: options.fontColor,
     scale: options.scale,
@@ -62,6 +65,9 @@ export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): Soa
     // directive-bearing renders use single-character preference to keep those
     // positions addressable without a full selector rewrite.
     renmenPriority: hasForcedGlyph ? 0 : metadata.soanConfig.renmenPriority,
+    numLines: metadata.soanConfig.numLines,
+    charSpacing: metadata.soanConfig.charSpacing,
+    lineSpacing: metadata.soanConfig.lineSpacing,
     professionalDirectives: metadata.directives,
     professionalBoundaries: metadata.boundaries,
   };
@@ -76,6 +82,7 @@ async function renderWithSoan(soan: SoanInstance, metadata: GenerationMetadata, 
 export interface GeneratedImage {
   readonly buffer: Buffer;
   readonly renderedGlyphs: GenerationMetadata['renderedGlyphs'];
+  readonly image: GenerationMetadata['image'];
 }
 
 export async function generateImage(options: CliOptions, metadata: GenerationMetadata): Promise<GeneratedImage> {
@@ -99,6 +106,10 @@ export async function generateImage(options: CliOptions, metadata: GenerationMet
   return {
     buffer: await applyGammaToBuffer(baseBuffer, options.format, options.quality, options.gamma),
     renderedGlyphs: renderResult.result,
+    image: {
+      width: canvas.width ?? 0,
+      height: canvas.height ?? 0,
+    },
   };
 }
 

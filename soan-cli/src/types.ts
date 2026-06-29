@@ -44,6 +44,9 @@ export interface SoanConfig {
   marginLeft: number;
   marginRight: number;
   height: 'auto' | 'fit';
+  numLines?: number;
+  charSpacing: number;
+  lineSpacing: number;
   fontFamily: string;
   fontColor: string;
   scale: number;
@@ -75,11 +78,15 @@ export interface GenerationMetadata {
   readonly boundaries: readonly BoundaryDirective[];
   readonly renderedGlyphs?: readonly SoanRenderedGlyph[];
   readonly selectedGlyphs?: readonly SelectedGlyphMetadata[];
+  readonly image?: ImageMetadata;
+  readonly xmp: XmpMetadata;
   readonly soanConfig: SoanConfig;
   readonly generatedAt: string;
 }
 
 export interface CanvasLike {
+  readonly width?: number;
+  readonly height?: number;
   toBuffer(mimeType?: string, config?: unknown): Buffer;
 }
 
@@ -98,11 +105,24 @@ export interface SelectedGlyphMetadata extends SoanRenderedGlyph {
   readonly glyphId?: number;
 }
 
+export interface ImageMetadata {
+  readonly width: number;
+  readonly height: number;
+}
+
+export interface XmpMetadata {
+  readonly embedded: boolean;
+  readonly reason?: string;
+}
+
 export interface SoanRenderOptions {
   canvas: CanvasLike;
   outputPath?: string;
   force: boolean;
   renmenPriority?: number;
+  numLines?: number;
+  charSpacing?: number;
+  lineSpacing?: number;
   professionalDirectives?: readonly ProDirective[];
   professionalBoundaries?: readonly BoundaryDirective[];
 }

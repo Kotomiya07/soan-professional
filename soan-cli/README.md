@@ -8,7 +8,9 @@ The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Prof
 - slash boundaries: `はな/の`, enforced as manual bunsetsu split points
 - deterministic `--seed` by temporarily replacing `Math.random` during rendering
 - gamma post-processing with `--gamma`
+- v1.2 layout controls: `--num-lines`, `--char-spacing`, and `--line-spacing`
 - sidecar reproducibility metadata with `--metadata-output`, including selected glyph URLs and parsed glyph IDs
+- JPEG XMP embedding of the same Professional metadata packet
 - pixi tasks for install, test, build, and smoke generation
 
 ## Setup
@@ -42,7 +44,9 @@ node dist/cli.js \
   --force
 ```
 
-`--metadata-output` records the original text, render text, seed, gamma, parsed Pro directives, slash boundaries, Soan layout options, raw rendered glyphs, and `selectedGlyphs` with parsed glyph IDs when the URL format exposes them.
+`--metadata-output` records the original text, render text, seed, gamma, parsed Pro directives, slash boundaries, Soan layout options, output image size, raw rendered glyphs, and `selectedGlyphs` with parsed glyph IDs when the URL format exposes them.
+
+`--num-lines` is verified after rendering. If the compatibility renderer cannot produce exactly that number of visual soft lines for the current text, the CLI fails before writing the output. Use `--chars-per-line` directly when you need manual control for a difficult text.
 
 Useful release checks:
 
@@ -61,6 +65,8 @@ npm pack --dry-run
 
 The local `package/soan/soan.cjs` wrapper uses `@napi-rs/canvas` instead of `canvas` because the machine has very little free disk space and `canvas` falls back to a native source build on this macOS arm64 environment. This also matches the `PLANS.md` direction of preferring a native-build-free Canvas adapter.
 
-The CLI treats generated JSON sidecars as the canonical Professional reproducibility record. XMP remains available on the unmodified Soan JPEG path, but gamma and PNG output require re-encoding, so sidecar JSON is the reliable v2 metadata contract.
+The CLI treats generated JSON sidecars as the canonical Professional reproducibility record. JPEG output also receives an APP1 XMP packet containing the Professional metadata JSON. PNG output records `xmp.embedded: false` in the sidecar because PNG metadata embedding is outside the v2 CLI contract.
 
 When a Pro glyph directive is present, the compatibility renderer sets `renmenPriority` to `0` for that render. The upstream selector can otherwise choose multi-character renmen tokens before position-based directives are applied, which would make single-character `［字母］` / `［ID］` controls ambiguous.
+
+Old Japanese / kobun morphological mode and PixiJS interactive editing are not part of the v2.0.0 compatibility CLI. They require a separate analyzer/UI implementation rather than a faithful CLI flag over the Soan v1.1.0 renderer.

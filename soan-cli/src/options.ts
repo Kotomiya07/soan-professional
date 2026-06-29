@@ -16,15 +16,35 @@ Core options:
   -o, --output <file>               Output image path. Writes a data URL to stdout when omitted.
       --metadata-output <file>      Write reproducibility metadata JSON.
       --format <jpeg|png>           Output format. Default: jpeg
+      --quality <0-1>               JPEG quality. Default: 0.92
       --seed <integer>              Deterministic rendering seed.
       --gamma <0.1-2.2>             Gamma correction. Default: 1
       --chars-per-line <integer>    Characters per line. Default: 20
       --line-gap <number>           Line gap. Default: 0.5
       --renmen-priority <0-1>       Renmen priority. Default: 1
+      --num-lines <integer>         Target number of vertical lines.
+      --char-spacing <integer>      Extra character spacing in 1/100 character units.
+      --line-spacing <integer>      Extra line spacing in 1/100 character units.
+      --margin <px>                 Set all margins when individual margins are omitted.
+      --margin-top <px>             Top margin. Default: 100
+      --margin-bottom <px>          Bottom margin. Default: 100
+      --margin-left <px>            Left margin. Default: 100
+      --margin-right <px>           Right margin. Default: 100
+      --height <auto|fit>           Output height behavior. Default: auto
+      --font-family <family>        Fallback font family. Default: serif
+      --font-color <css-color>      Fallback font color. Default: #000000
+      --scale <number>              Output scale. Default: 1
       --paper-texture <file>        Paper texture path.
+      --white <css-color>           Dataset white color mapping. Default: #ffffff
+      --black <css-color>           Dataset black color mapping. Default: #000000
+      --datasets <json>             Dataset config JSON. Repeatable.
+      --allow-unavailable-char      Render unavailable glyphs with fallback text.
       --force                       Overwrite output files.
       --version                     Print version.
       --help                        Print this help.
+
+Unsupported in v2.0.0 compatibility CLI:
+  Old Japanese / kobun morphological mode and PixiJS interactive editing.
 `);
 }
 
@@ -45,6 +65,12 @@ const argsConfig = {
     'chars-per-line': { type: 'string', description: '字詰数（charsPerLineの別名）' },
     lineGap: { type: 'string', default: '0.5', description: '行間' },
     'line-gap': { type: 'string', description: '行間（lineGapの別名）' },
+    numLines: { type: 'string', description: '行数指定。指定時は本文字数から字詰数を導出する' },
+    'num-lines': { type: 'string', description: '行数指定（numLinesの別名）' },
+    charSpacing: { type: 'string', default: '0', description: '字間微調整（1/100文字単位）' },
+    'char-spacing': { type: 'string', description: '字間微調整（charSpacingの別名）' },
+    lineSpacing: { type: 'string', default: '0', description: '行間微調整（1/100文字単位）' },
+    'line-spacing': { type: 'string', description: '行間微調整（lineSpacingの別名）' },
     margin: { type: 'string', description: '天地左右の余白（px）。個別指定がない箇所へ適用' },
     marginTop: { type: 'string', default: '100', description: '天の余白（px）' },
     'margin-top': { type: 'string', description: '天の余白（marginTopの別名）' },
@@ -150,6 +176,9 @@ export function readCliOptions(): CliOptions | undefined {
         : undefined;
   const charsPerLine = typeof values['chars-per-line'] === 'string' ? values['chars-per-line'] : String(values.charsPerLine);
   const lineGap = typeof values['line-gap'] === 'string' ? values['line-gap'] : String(values.lineGap);
+  const numLines = typeof values['num-lines'] === 'string' ? values['num-lines'] : values.numLines;
+  const charSpacing = typeof values['char-spacing'] === 'string' ? values['char-spacing'] : String(values.charSpacing);
+  const lineSpacing = typeof values['line-spacing'] === 'string' ? values['line-spacing'] : String(values.lineSpacing);
   const margin = typeof values.margin === 'string' ? parseInteger('margin', values.margin) : undefined;
   const renmenPriority =
     typeof values['renmen-priority'] === 'string' ? values['renmen-priority'] : String(values.renmenPriority);
@@ -165,6 +194,9 @@ export function readCliOptions(): CliOptions | undefined {
   const parsedRenmenPriority = parseNumber('renmenPriority', renmenPriority);
   const parsedCharsPerLine = parseInteger('charsPerLine', charsPerLine);
   const parsedLineGap = parseNumber('lineGap', lineGap);
+  const parsedNumLines = typeof numLines === 'string' ? parseInteger('numLines', numLines) : undefined;
+  const parsedCharSpacing = parseInteger('charSpacing', charSpacing);
+  const parsedLineSpacing = parseInteger('lineSpacing', lineSpacing);
   const parsedMarginTop = parseInteger('marginTop', marginTop);
   const parsedMarginBottom = parseInteger('marginBottom', marginBottom);
   const parsedMarginLeft = parseInteger('marginLeft', marginLeft);
@@ -175,6 +207,11 @@ export function readCliOptions(): CliOptions | undefined {
   assertRange('renmenPriority', parsedRenmenPriority, 0, 1);
   assertAtLeast('charsPerLine', parsedCharsPerLine, 0);
   assertAtLeast('lineGap', parsedLineGap, 0);
+  if (parsedNumLines !== undefined) {
+    assertAtLeast('numLines', parsedNumLines, 1);
+  }
+  assertAtLeast('charSpacing', parsedCharSpacing, -99);
+  assertAtLeast('lineSpacing', parsedLineSpacing, -99);
   assertAtLeast('marginTop', parsedMarginTop, 0);
   assertAtLeast('marginBottom', parsedMarginBottom, 0);
   assertAtLeast('marginLeft', parsedMarginLeft, 0);
@@ -197,6 +234,9 @@ export function readCliOptions(): CliOptions | undefined {
     marginLeft: parsedMarginLeft,
     marginRight: parsedMarginRight,
     height: values.height === 'fit' ? 'fit' : 'auto',
+    numLines: parsedNumLines,
+    charSpacing: parsedCharSpacing,
+    lineSpacing: parsedLineSpacing,
     fontFamily,
     fontColor,
     scale: parsedScale,
