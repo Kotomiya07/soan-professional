@@ -22,4 +22,8 @@ describe('parseExtendedText', () => {
     expect(parsed.renderText).toBe('かな');
     expect(parsed.directives).toEqual([{ kind: 'id', position: 0, raw: '4867', id: 4867 }]);
   });
+
+  it('rejects empty full-width directives', () => {
+    expect(() => parseExtendedText('か［］な')).toThrow('Professional directive must not be empty');
+  });
 });

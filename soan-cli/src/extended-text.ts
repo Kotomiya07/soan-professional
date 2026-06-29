@@ -13,6 +13,10 @@ function directivePosition(renderTextLength: number): number {
 
 function parseDirective(raw: string, position: number): ProDirective {
   const trimmed = raw.trim();
+  if (trimmed === '') {
+    throw new Error('Professional directive must not be empty');
+  }
+
   if (/^\d+$/.test(trimmed)) {
     return {
       kind: 'id',

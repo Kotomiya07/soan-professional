@@ -2,7 +2,7 @@ import { createRequire } from 'node:module';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { applyGammaToRgba } from './gamma.js';
 import { withSeededMathRandom } from './prng.js';
-import type { CanvasLike, CliOptions, GenerationMetadata, SoanFactory, SoanInstance } from './types.js';
+import type { CanvasLike, CliOptions, GenerationMetadata, SoanFactory, SoanInstance, SoanRenderOptions } from './types.js';
 
 const require = createRequire(import.meta.url);
 const createSoan = require('soan') as SoanFactory;
@@ -19,6 +19,7 @@ function soanConfigFromOptions(options: CliOptions) {
     marginLeft: options.marginLeft,
     marginRight: options.marginRight,
     height: options.height,
+    fontFamily: options.fontFamily,
     fontColor: options.fontColor,
     scale: options.scale,
     paperTexture: options.paperTexture,
@@ -51,22 +52,39 @@ async function applyGammaToBuffer(buffer: Buffer, format: 'jpeg' | 'png', qualit
   return encodeCanvas(canvas, format, quality);
 }
 
-async function renderWithSoan(soan: SoanInstance, text: string, seed: number | undefined) {
+export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): SoanRenderOptions {
+  const hasForcedGlyph = metadata.directives.length > 0;
+  return {
+    canvas: createCanvas(1, 1),
+    force: true,
+    // Forced glyph directives are position-based. The compatibility engine can
+    // choose multi-character renmen tokens before final glyph selection, so
+    // directive-bearing renders use single-character preference to keep those
+    // positions addressable without a full selector rewrite.
+    renmenPriority: hasForcedGlyph ? 0 : metadata.soanConfig.renmenPriority,
+    professionalDirectives: metadata.directives,
+    professionalBoundaries: metadata.boundaries,
+  };
+}
+
+async function renderWithSoan(soan: SoanInstance, metadata: GenerationMetadata, seed: number | undefined) {
   return withSeededMathRandom(seed, () =>
-    soan.getTextImageFromTextPromise(text, {
-      canvas: createCanvas(1, 1),
-      force: true,
-    }),
+    soan.getTextImageFromTextPromise(metadata.renderText, soanRenderOptionsFromMetadata(metadata)),
   );
 }
 
-export async function generateImage(options: CliOptions, metadata: GenerationMetadata): Promise<Buffer> {
+export interface GeneratedImage {
+  readonly buffer: Buffer;
+  readonly renderedGlyphs: GenerationMetadata['renderedGlyphs'];
+}
+
+export async function generateImage(options: CliOptions, metadata: GenerationMetadata): Promise<GeneratedImage> {
   const soan = createSoan(soanConfigFromOptions(options));
   if (soan === undefined) {
     throw new Error('Failed to initialize Soan');
   }
 
-  const renderResult = await renderWithSoan(soan, metadata.renderText, options.seed);
+  const renderResult = await renderWithSoan(soan, metadata, options.seed);
   const canvas = renderResult.opt.canvas;
 
   // Prefer Soan's JPEG/XMP helper for the default path because it preserves
@@ -78,7 +96,10 @@ export async function generateImage(options: CliOptions, metadata: GenerationMet
       ? await soan.getBufferWithXMPFromCanvasPromise(canvas)
       : encodeCanvas(canvas, options.format, options.quality);
 
-  return applyGammaToBuffer(baseBuffer, options.format, options.quality, options.gamma);
+  return {
+    buffer: await applyGammaToBuffer(baseBuffer, options.format, options.quality, options.gamma),
+    renderedGlyphs: renderResult.result,
+  };
 }
 
 export { soanConfigFromOptions };

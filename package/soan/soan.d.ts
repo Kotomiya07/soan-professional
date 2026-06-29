@@ -1,5 +1,5 @@
 export = Soan;
-declare function Soan(config: any, vg: any): {
+declare function Soan(config: unknown, vg: unknown): {
     getTextImageFromText: (text: string, opt?: {
         /**
          * 利用する古活字データセット情報の配列
@@ -91,7 +91,7 @@ declare function Soan(config: any, vg: any): {
         /**
          * 正常完了時のコールバック関数
          */
-        doneCallback?: (text: string, opt: object, result: any[]) => any;
+        doneCallback?: (text: string, opt: object, result: unknown[]) => unknown;
         /**
          * 異常終了時のコールバック関数
          */
@@ -200,7 +200,7 @@ declare function Soan(config: any, vg: any): {
         /**
          * 古活字画像等情報列
          */
-        result: any[];
+        result: unknown[];
     }>;
     getBlobWithXMPFromCanvasPromise: (canvas: object) => Promise<Blob>;
 };

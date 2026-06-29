@@ -18,11 +18,33 @@ Professional版の全量移植は本計画上43日規模のため、最初の縦
 - `pixi run build`: TypeScript build passed
 - `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成
 
+## 2026-06-29 v2.0.0 CLI公開候補メモ
+
+oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pro 記法が metadata 記録のみでレンダリングに効かないこと、実選択 glyph ID が metadata にないこと、package が private / pre-release のままであること、`any` 型が残ることだと指摘された。
+
+改善済み:
+- `package/soan/soan.min.js` の互換レイヤーへ Pro option を通し、`［字母］` は候補 jibo filter、`［ID］` は URL ID 直接選択としてレンダリングへ反映
+- `/` 境界は kuromoji 後の bunsetsu 配列を手動分割し、`かな` と `か/な` で連綿選択が変わることを smoke で確認
+- `selectedGlyphs` metadata を追加し、選択 glyph URL・位置・jibo・URLから抽出できる glyph ID を記録
+- `soan-professional-cli@2.0.0` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
+- `--version`, 安定した `--help`, kebab-case aliases, `--margin`, `--font-family`, 数値 range validation を追加
+- `soan-cli/src`, `soan-cli/test`, `package/soan/soan.d.ts` から明示的な `any` 型を除去
+
+検証済み:
+- `pixi run test`: 8 tests passed
+- `pixi run build`: TypeScript build passed
+- `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成し、`15338` ID 指示が選択 glyph に反映
+- `node dist/cli.js --text 'か［加］/な' ...`: jibo `加` と slash 境界の反映を metadata で確認
+- `node dist/cli.js --text 'かな'` と `node dist/cli.js --text 'か/な'`: 境界なしは `かな` 連綿、境界ありは `か` / `な` 単字に分割されることを確認
+- `npm --prefix soan-cli audit --omit=dev`: production dependency vulnerabilities 0
+- `npm --cache ./tmp/npm-cache pack --dry-run`: tarball contents and bundled `soan` dependency checked
+- packed tarball を `/private/tmp/soan-pack-test.*` へ install し、`npx soan --version` と `npx soan --text 'か［加］/な' ...` が成功、metadata の先頭 glyph が jibo `加` になることを確認
+
 現時点の制限:
-- `［字母］` / `［ID］` は metadata に記録するが、既存soan v1.1.0内部の字母選択へ強制適用する接続は未実装
-- `/` 境界も metadata 記録までで、kuromoji文節分割への強制反映は未実装
+- Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする
+- `［ID］` はロード済みデータセット URL と同梱 fallback 画像 URL から解決する。未ロードの外部 dataset 全体を ID 逆引きする汎用 index は未実装
 - XMPへPro metadataを直接埋め込む代わりに sidecar JSON を正式な再現性出力としている
-- oracle本実行は `setTypeOfService EINVAL` でエラー終了したため、dry-runで確認した添付範囲と既知の環境エラーだけを反映した
+- 古文モード、PixiJS インタラクティブ編集、v1.2 改良組版の `numLines` / `charSpacing` / `lineSpacing` は CLI 公開候補の範囲外として未実装
 
 ## 概要
 

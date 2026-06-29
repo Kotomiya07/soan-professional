@@ -1,7 +1,7 @@
 {
-  "name": "soan-cli",
-  "version": "1.2.0-pro.0",
-  "description": "Professional CLI slice for Soan image generation",
+  "name": "soan-professional-cli",
+  "version": "2.0.0",
+  "description": "Professional CLI for Soan image generation",
   "author": "Center for Open Data in the Humanities, Research Organization of Information and Systems",
   "contributors": [ "Jun HOMMA (https://www.flxstyle.com/)" ],
   "license": "MIT",
@@ -26,9 +26,28 @@
     "vitest": "^2.1.8"
   },
   "bin": {
+    "soan": "./dist/cli.js",
     "soan-cli": "./dist/cli.js",
     "soan-pro": "./dist/cli.js"
   },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "keywords": [
+    "soan",
+    "kuzushiji",
+    "cli",
+    "typography",
+    "japanese"
+  ],
+  "bundledDependencies": [
+    "soan"
+  ],
   "type": "module",
-  "private": true
+  "publishConfig": {
+    "access": "public"
+  }
 }
