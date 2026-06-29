@@ -40,7 +40,7 @@ pixi run check
 pixi run build
 cd soan-cli
 node dist/cli.js \
-  --text "サンプル［15338］/かな" \
+  --text "か［加］/な" \
   --seed 42 \
   --gamma 1.1 \
   --output ./tmp/sample.jpg \

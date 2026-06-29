@@ -4,7 +4,7 @@
 
 The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Professional controls:
 
-- full-width bracket Pro notation: `かな［加］` and `かな［15338］`, enforced during glyph selection
+- full-width bracket Pro notation: `か［加］な` and `か［1］`, enforced during glyph selection
 - slash boundaries: `はな/の`, enforced as manual bunsetsu split points
 - deterministic `--seed` by temporarily replacing `Math.random` during rendering
 - gamma post-processing with `--gamma`
@@ -36,7 +36,7 @@ The smoke task writes:
 pixi run build
 cd soan-cli
 node dist/cli.js \
-  --text "サンプル［15338］/かな" \
+  --text "か［加］/な" \
   --seed 42 \
   --gamma 1.1 \
   --chars-per-line 20 \
