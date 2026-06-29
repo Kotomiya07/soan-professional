@@ -96,7 +96,7 @@ npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata
 
 ## メタデータ契約
 
-`--metadata-output` の sidecar JSON が v2.0.0 の canonical reproducibility record です。JPEG には同じ Professional metadata JSON を XMP として埋め込みます。PNG は sidecar JSON のみを正式記録とし、metadata に `xmp.embedded: false` と理由を記録します。
+`--metadata-output` の sidecar JSON が v2.0.0 の canonical reproducibility record です。JPEG には同じ Professional metadata JSON を XMP として埋め込みます。XMP が JPEG APP1 のサイズ上限を超える場合は compact XMP を試し、それでも大きい場合は JPEG と sidecar を出力したうえで `xmp.embedded: false` と理由を記録します。PNG は sidecar JSON のみを正式記録とします。
 
 ## 制限
 

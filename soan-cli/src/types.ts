@@ -114,6 +114,7 @@ export interface ImageMetadata {
 
 export interface XmpMetadata {
   readonly embedded: boolean;
+  readonly mode?: 'full' | 'compact';
   readonly reason?: string;
 }
 

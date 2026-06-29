@@ -30,6 +30,7 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `--version`, 安定した `--help`, kebab-case aliases, `--margin`, `--font-family`, 数値 range validation を追加
 - v1.2 CLI 組版オプションとして `--num-lines`, `--char-spacing`, `--line-spacing` を追加。`--num-lines` はレンダリング後の softLine 数を検証し、正確に満たせない場合は出力前に失敗する
 - JPEG 出力へ Professional metadata JSON を APP1 XMP として埋め込み。PNG は sidecar JSON を正式記録とし、`xmp.embedded: false` と理由を記録
+- JPEG XMP は APP1 上限を超える場合に compact XMP を試し、それでも超える場合は JPEG と sidecar を出力しつつ `xmp.embedded: false` と理由を記録する fallback を追加
 - root `pixi run check` を test/build/smoke の release gate に更新し、package-level `npm run check` と `prepack` も追加
 - `--old-japanese` / `--kobun` を古文表記保持モードとして追加。kuromoji の読み変換を避け、原文表記と `/` 手動境界を使って既存 renderer に渡す
 - `［ID］` はロード済み dataset の `data` 全体からも逆引きし、本文に同じ文字が出ていない ID でも選択できるようにした
@@ -51,6 +52,7 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `node dist/cli.js --text 'か［1］' ...`: dataset `001.json` の本文非依存 ID `000001` が `selectedGlyphs[0].glyphId === 1` として選択されることを確認
 - `node dist/cli.js --text 'けふ/こそ' --old-japanese ...`: metadata に `morphologyMode: old-japanese` が記録され、`けふ` / `こそ` の表記保持と手動境界が反映されることを確認
 - packed tarball を `/private/tmp/soan-pack-final.cVrjHw` へ install し、`npx soan --text 'か［1］' ...` と `npx soan --text 'けふ/こそ' --kobun ...` が成功。tarball 経由でも dataset 全体 ID 逆引きと古文表記保持モードが動作することを確認
+- 長文 JPEG smoke: `か` 1200字入力で XMP APP1 上限を超えても CLI が失敗せず JPEG と sidecar を生成し、`xmp.embedded: false` と理由を記録することを確認
 
 現時点の制限:
 - Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする

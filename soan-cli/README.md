@@ -66,7 +66,7 @@ npm pack --dry-run
 
 The local `package/soan/soan.cjs` wrapper uses `@napi-rs/canvas` instead of `canvas` because the machine has very little free disk space and `canvas` falls back to a native source build on this macOS arm64 environment. This also matches the `PLANS.md` direction of preferring a native-build-free Canvas adapter.
 
-The CLI treats generated JSON sidecars as the canonical Professional reproducibility record. JPEG output also receives an APP1 XMP packet containing the Professional metadata JSON. PNG output records `xmp.embedded: false` in the sidecar because PNG metadata embedding is outside the v2 CLI contract.
+The CLI treats generated JSON sidecars as the canonical Professional reproducibility record. JPEG output also receives an APP1 XMP packet containing the Professional metadata JSON when it fits in a single APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it still writes the JPEG and sidecar and records `xmp.embedded: false` with the reason. PNG output records `xmp.embedded: false` in the sidecar because PNG metadata embedding is outside the v2 CLI contract.
 
 When a Pro glyph directive is present, the compatibility renderer sets `renmenPriority` to `0` for that render. The upstream selector can otherwise choose multi-character renmen tokens before position-based directives are applied, which would make single-character `［字母］` / `［ID］` controls ambiguous.
 

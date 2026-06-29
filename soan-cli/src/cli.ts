@@ -5,7 +5,7 @@ import { readCliOptions } from './options.js';
 import { ensureParentDirectory, writeImageBuffer } from './output.js';
 import { generateImage, soanConfigFromOptions } from './render.js';
 import type { CliOptions, GenerationMetadata, SelectedGlyphMetadata, SoanRenderedGlyph } from './types.js';
-import { injectXmpMetadata } from './xmp.js';
+import { tryInjectXmpMetadata } from './xmp.js';
 
 function glyphIdFromUrl(url: string): number | undefined {
   const fallbackMatch = url.match(/(?:^|\/)(\d+)-/);
@@ -100,14 +100,26 @@ async function main(): Promise<void> {
     selectedGlyphs,
     image: generated.image,
   };
+  const xmpResult =
+    options.format === 'jpeg'
+      ? tryInjectXmpMetadata(generated.buffer, {
+          ...metadataWithoutXmpStatus,
+          xmp: { embedded: true, mode: 'full' },
+        })
+      : {
+          buffer: generated.buffer,
+          embedded: false,
+          reason: 'PNG output stores Professional metadata in the JSON sidecar',
+        };
   const metadata: GenerationMetadata = {
     ...metadataWithoutXmpStatus,
-    xmp:
-      options.format === 'jpeg'
-        ? { embedded: true }
-        : { embedded: false, reason: 'PNG output stores Professional metadata in the JSON sidecar' },
+    xmp: {
+      embedded: xmpResult.embedded,
+      mode: xmpResult.mode,
+      reason: xmpResult.reason,
+    },
   };
-  const buffer = options.format === 'jpeg' ? injectXmpMetadata(generated.buffer, metadata) : generated.buffer;
+  const buffer = xmpResult.buffer;
   writeImageBuffer(options.output, buffer, options.force, options.format);
   writeMetadata(options.metadataOutput, metadata);
 }

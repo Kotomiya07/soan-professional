@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { injectXmpMetadata } from '../src/xmp.js';
+import { injectXmpMetadata, tryInjectXmpMetadata } from '../src/xmp.js';
 import type { GenerationMetadata } from '../src/types.js';
 
 function metadataFixture(): GenerationMetadata {
@@ -52,5 +52,53 @@ describe('injectXmpMetadata', () => {
     expect(() => injectXmpMetadata(Buffer.from([0x89, 0x50, 0x4e, 0x47]), metadataFixture())).toThrow(
       'XMP metadata can only be embedded into JPEG buffers',
     );
+  });
+
+  it('falls back to compact XMP when full metadata is too large', () => {
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+    const metadata = {
+      ...metadataFixture(),
+      renderedGlyphs: Array.from({ length: 4000 }, (_, index) => ({
+        url: `https://example.test/${index}.png`,
+        token: 'か',
+        line: 0,
+        available: true,
+        isFallback: false,
+        jibo: '加',
+      })),
+      selectedGlyphs: [
+        {
+          url: 'https://example.test/000001.png',
+          token: 'か',
+          line: 0,
+          available: true,
+          isFallback: false,
+          jibo: '加',
+          position: 0,
+          glyphId: 1,
+        },
+      ],
+    };
+
+    const result = tryInjectXmpMetadata(jpeg, metadata);
+
+    expect(result.embedded).toBe(true);
+    expect(result.mode).toBe('compact');
+    expect(result.buffer.toString('utf8')).toContain('&quot;mode&quot;:&quot;compact&quot;');
+  });
+
+  it('falls back to sidecar-only metadata when even compact XMP is too large', () => {
+    const jpeg = Buffer.from([0xff, 0xd8, 0xff, 0xd9]);
+    const metadata = {
+      ...metadataFixture(),
+      sourceText: 'か'.repeat(70000),
+      renderText: 'か'.repeat(70000),
+    };
+
+    const result = tryInjectXmpMetadata(jpeg, metadata);
+
+    expect(result.embedded).toBe(false);
+    expect(result.buffer).toBe(jpeg);
+    expect(result.reason).toContain('XMP metadata is too large');
   });
 });
