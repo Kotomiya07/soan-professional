@@ -1,0 +1,13 @@
+[workspace]
+channels = ["conda-forge"]
+platforms = ["osx-arm64"]
+
+[dependencies]
+nodejs = ">=20,<21"
+
+[tasks]
+install = "npm --prefix soan-cli install"
+build = "npm --prefix soan-cli run build"
+test = "npm --prefix soan-cli test"
+smoke = "npm --prefix soan-cli run smoke"
+check = { depends-on = ["test", "build"] }

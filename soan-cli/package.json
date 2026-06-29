@@ -1,0 +1,34 @@
+{
+  "name": "soan-cli",
+  "version": "1.2.0-pro.0",
+  "description": "Professional CLI slice for Soan image generation",
+  "author": "Center for Open Data in the Humanities, Research Organization of Information and Systems",
+  "contributors": [ "Jun HOMMA (https://www.flxstyle.com/)" ],
+  "license": "MIT",
+  "main": "dist/cli.js",
+  "types": "dist/cli.d.ts",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "smoke": "node dist/cli.js --text \"サンプル［15338］/かな\" --seed 42 --gamma 1.1 --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force"
+  },
+  "dependencies": {
+    "@napi-rs/canvas": "^0.1.80",
+    "jquery": "^3.7.0",
+    "jsdom": "^22.1.0",
+    "kuromoji": "^0.1.2",
+    "minus-h": "^1.1.1",
+    "soan": "file:../package"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  },
+  "bin": {
+    "soan-cli": "./dist/cli.js",
+    "soan-pro": "./dist/cli.js"
+  },
+  "type": "module",
+  "private": true
+}

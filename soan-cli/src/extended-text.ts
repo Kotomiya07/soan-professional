@@ -1,0 +1,71 @@
+import type { BoundaryDirective, ParsedExtendedText, ProDirective } from './types.js';
+
+const FULL_WIDTH_OPEN = '［';
+const FULL_WIDTH_CLOSE = '］';
+
+function directivePosition(renderTextLength: number): number {
+  // Pro notation is written after the character it modifies:
+  //   か［加］ -> directive for render position 0.
+  // When users put a directive before text, keep it attached to the next
+  // character position so the metadata remains useful instead of dropping it.
+  return Math.max(0, renderTextLength - 1);
+}
+
+function parseDirective(raw: string, position: number): ProDirective {
+  const trimmed = raw.trim();
+  if (/^\d+$/.test(trimmed)) {
+    return {
+      kind: 'id',
+      position,
+      raw,
+      id: Number.parseInt(trimmed, 10),
+    };
+  }
+
+  return {
+    kind: 'jibo',
+    position,
+    raw,
+    jibo: trimmed,
+  };
+}
+
+export function parseExtendedText(sourceText: string): ParsedExtendedText {
+  const renderChars: string[] = [];
+  const directives: ProDirective[] = [];
+  const boundaries: BoundaryDirective[] = [];
+
+  for (let index = 0; index < sourceText.length; index += 1) {
+    const char = sourceText[index];
+
+    if (char === '/') {
+      boundaries.push({ position: renderChars.length });
+      continue;
+    }
+
+    if (char === FULL_WIDTH_OPEN) {
+      const closeIndex = sourceText.indexOf(FULL_WIDTH_CLOSE, index + 1);
+      if (closeIndex === -1) {
+        // Treat an unmatched bracket as ordinary text. This keeps the CLI
+        // forgiving for historical text transcription where brackets can be
+        // copied incompletely during editing.
+        renderChars.push(char);
+        continue;
+      }
+
+      const raw = sourceText.slice(index + 1, closeIndex);
+      directives.push(parseDirective(raw, directivePosition(renderChars.length)));
+      index = closeIndex;
+      continue;
+    }
+
+    renderChars.push(char);
+  }
+
+  return {
+    sourceText,
+    renderText: renderChars.join(''),
+    directives,
+    boundaries,
+  };
+}

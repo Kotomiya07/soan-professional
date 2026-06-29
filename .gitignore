@@ -1,0 +1,20 @@
+# macOS metadata
+.DS_Store
+
+# Pixi local environment
+.pixi/
+
+# Node dependencies and build outputs
+node_modules/
+soan-cli/node_modules/
+soan-cli/dist/
+
+# CLI smoke-test/generated outputs
+soan-cli/tmp/
+
+# Large source datasets are kept out of git for now.
+# Add a small fixture directory later when local dataset tests are introduced.
+datasets/
+
+# Downloaded release archives; source is kept unpacked under package/ and soan-cli/.
+*.tgz
