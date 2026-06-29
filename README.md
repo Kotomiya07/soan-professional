@@ -1,6 +1,6 @@
 # soan-professional-cli v2.0.0
 
-Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 は CLI 互換リリースであり、ブラウザ編集 UI や MeCab / 中古和文 UniDic 解析を含む Professional 全体の完全移植ではありません。
+Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 は CLI / core / demo の互換リリースであり、PixiJS ブラウザ編集 UI は範囲外です。
 
 ## 現在の公開単位
 
@@ -18,7 +18,9 @@ Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジン
 - `--generated-at` による metadata timestamp 固定と XMP 込み JPEG の byte-level 再現性
 - `--gamma` による出力画像のガンマ補正
 - `--num-lines`, `--char-spacing`, `--line-spacing` による v1.2 CLI 組版制御
-- `--old-japanese` / `--kobun` による古文表記保持モード
+- `--old-japanese` / `--kobun` による MeCab / 中古和文 UniDic 解析
+- `--page-width`, `--page-height` による page layout
+- `--manual-positions` による glyph 手動位置調整
 - `--metadata-output` による canonical sidecar JSON
 - JPEG APP1 XMP への Professional metadata 埋め込み
 - PNG 出力
@@ -33,7 +35,7 @@ pixi run install
 pixi run check
 ```
 
-`pixi run check` は unit test, build, CLI e2e, smoke を実行します。
+`pixi run check` は core build, unit test, CLI build, MeCab 込み CLI e2e, smoke を実行します。
 
 ## 基本コマンド
 
@@ -50,13 +52,14 @@ node dist/cli.js \
   --force
 ```
 
-古文表記保持モード:
+中古和文 UniDic 解析モード:
 
 ```bash
 cd soan-cli
 node dist/cli.js \
   --text "けふ/こそ" \
   --kobun \
+  --mecab-dic ../dictionaries/unidic-chuko-v202512 \
   --seed 5 \
   --output ./tmp/kobun.jpg \
   --metadata-output ./tmp/kobun.json \
@@ -91,6 +94,8 @@ npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata
 ## ディレクトリ
 
 - `soan-cli/`: npm package 本体
+- `packages/core/`: renderer-independent core contracts
+- `packages/demo/`: PixiJSを使わない静的CLI demo
 - `soan-cli/src/`: TypeScript CLI 実装
 - `soan-cli/test/`: Vitest unit tests
 - `package/`: Soan v1.1.0 互換 dependency
@@ -107,5 +112,5 @@ npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata
 
 - Pro glyph 指示があるレンダリングでは、位置指定を成立させるため、その実行に限って実効 `renmenPriority` を `0` にします。この値は sidecar の `soanConfig.renmenPriority` にも実効値として記録します。
 - `［ID］` は設定済み dataset と同梱 fallback 画像から解決します。未指定 dataset を探索する global registry は持ちません。
-- `--old-japanese` / `--kobun` は表記保持の互換モードです。MeCab / 中古和文 UniDic 連携ではありません。
-- PixiJS interactive editing は CLI package の範囲外です。
+- `dictionaries/unidic-chuko-v202512` はローカル辞書配置です。npm tarball には同梱せず、配布先では `--mecab-dic` または `SOAN_MECAB_DIC` で辞書を指定します。
+- PixiJS interactive editing は v2.0.0 の範囲外です。

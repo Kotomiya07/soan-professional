@@ -8,7 +8,9 @@ nodejs = ">=20,<21"
 [tasks]
 install = "npm --prefix soan-cli install"
 build = "npm --prefix soan-cli run build"
+build-core = "npm --prefix soan-cli exec tsc -- -p packages/core/tsconfig.json"
 test = "npm --prefix soan-cli test"
-e2e = "npm --prefix soan-cli run test:e2e"
+e2e = "nix shell nixpkgs#mecab -c npm --prefix soan-cli run test:e2e"
 smoke = "npm --prefix soan-cli run smoke"
-check = { depends-on = ["test", "build", "e2e", "smoke"] }
+check = { depends-on = ["build-core", "test", "build", "e2e", "smoke"] }
+demo = "node packages/demo/server.mjs"

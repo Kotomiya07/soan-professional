@@ -1,0 +1,12 @@
+{
+  "name": "soan-professional-monorepo",
+  "private": true,
+  "workspaces": [
+    "packages/*",
+    "soan-cli"
+  ],
+  "scripts": {
+    "build:core": "npm --prefix soan-cli exec tsc -- -p packages/core/tsconfig.json",
+    "check": "pixi run check"
+  }
+}

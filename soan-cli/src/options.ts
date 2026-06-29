@@ -2,6 +2,7 @@ import { parseArgs } from 'node:util';
 import { parseArgsWithHelp, usage } from 'minus-h';
 import type { CliOptions, DatasetConfig, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
+import { defaultChukoDictionaryPath } from './mecab.js';
 
 export const CLI_VERSION = '2.0.0';
 
@@ -33,6 +34,11 @@ Core options:
       --margin-left <px>            Left margin. Default: 100
       --margin-right <px>           Right margin. Default: 100
       --height <auto|fit>           Output height behavior. Default: auto
+      --page-width <px>             Force output page width.
+      --page-height <px>            Force output page height.
+      --manual-positions <json>     JSON array of {position,offsetX,offsetY}.
+      --mecab-dic <dir>             Chuko-Wabun UniDic dictionary directory for --kobun.
+      --mecab-command <cmd>         MeCab executable. Default: mecab
       --font-family <family>        Fallback font family. Default: serif
       --font-color <css-color>      Fallback font color. Default: #000000
       --scale <number>              Output scale. Default: 1
@@ -86,6 +92,16 @@ const argsConfig = {
     marginRight: { type: 'string', default: '100', description: '右の余白（px）' },
     'margin-right': { type: 'string', description: '右の余白（marginRightの別名）' },
     height: { type: 'string', default: 'auto', choices: ['auto', 'fit'], description: '出力画像の縦幅' },
+    pageWidth: { type: 'string', description: 'Professional page layout width in pixels' },
+    'page-width': { type: 'string', description: 'Professional page layout width in pixels（pageWidthの別名）' },
+    pageHeight: { type: 'string', description: 'Professional page layout height in pixels' },
+    'page-height': { type: 'string', description: 'Professional page layout height in pixels（pageHeightの別名）' },
+    manualPositions: { type: 'string', description: 'Manual glyph offsets JSON: [{"position":0,"offsetX":10,"offsetY":-5}]' },
+    'manual-positions': { type: 'string', description: 'Manual glyph offsets JSON（manualPositionsの別名）' },
+    mecabDic: { type: 'string', description: '中古和文UniDic directory for --old-japanese / --kobun' },
+    'mecab-dic': { type: 'string', description: '中古和文UniDic directory（mecabDicの別名）' },
+    mecabCommand: { type: 'string', default: 'mecab', description: 'MeCab executable path' },
+    'mecab-command': { type: 'string', description: 'MeCab executable path（mecabCommandの別名）' },
     fontFamily: { type: 'string', default: 'serif', description: '未登録文字のフォントファミリー' },
     'font-family': { type: 'string', description: '未登録文字のフォントファミリー（fontFamilyの別名）' },
     fontColor: { type: 'string', default: '#000000', description: '未登録文字のフォント色' },
@@ -140,6 +156,30 @@ function parseDataset(raw: string): DatasetConfig {
 
   const priority = 'priority' in parsed && typeof parsed.priority === 'number' ? parsed.priority : undefined;
   return priority === undefined ? { url: parsed.url } : { url: parsed.url, priority };
+}
+
+function parseManualPositions(raw: string | undefined) {
+  if (raw === undefined || raw === '') {
+    return [];
+  }
+
+  const parsed: unknown = JSON.parse(raw);
+  if (!Array.isArray(parsed)) {
+    throw new Error('--manual-positions must be a JSON array');
+  }
+
+  return parsed.map((item, index) => {
+    if (typeof item !== 'object' || item === null) {
+      throw new Error(`--manual-positions[${index}] must be an object`);
+    }
+    const position = 'position' in item ? Number(item.position) : NaN;
+    const offsetX = 'offsetX' in item ? Number(item.offsetX) : 0;
+    const offsetY = 'offsetY' in item ? Number(item.offsetY) : 0;
+    if (!Number.isInteger(position) || position < 0 || !Number.isFinite(offsetX) || !Number.isFinite(offsetY)) {
+      throw new Error(`--manual-positions[${index}] must contain position, offsetX, and offsetY numbers`);
+    }
+    return { position, offsetX, offsetY };
+  });
 }
 
 export function readCliOptions(): CliOptions | undefined {
@@ -198,10 +238,32 @@ export function readCliOptions(): CliOptions | undefined {
   const fontFamily = typeof values['font-family'] === 'string' ? values['font-family'] : String(values.fontFamily);
   const fontColor = typeof values['font-color'] === 'string' ? values['font-color'] : String(values.fontColor);
   const paperTexture = typeof values['paper-texture'] === 'string' ? values['paper-texture'] : String(values.paperTexture);
+  const pageWidth = typeof values['page-width'] === 'string' ? values['page-width'] : values.pageWidth;
+  const pageHeight = typeof values['page-height'] === 'string' ? values['page-height'] : values.pageHeight;
+  const manualPositionsRaw =
+    typeof values['manual-positions'] === 'string'
+      ? values['manual-positions']
+      : typeof values.manualPositions === 'string'
+        ? values.manualPositions
+        : undefined;
+  const mecabDictionaryPath =
+    typeof values['mecab-dic'] === 'string'
+      ? values['mecab-dic']
+      : typeof values.mecabDic === 'string'
+        ? values.mecabDic
+        : process.env.SOAN_MECAB_DIC ?? defaultChukoDictionaryPath();
+  const mecabCommand =
+    typeof values['mecab-command'] === 'string'
+      ? values['mecab-command']
+      : typeof values.mecabCommand === 'string'
+        ? values.mecabCommand
+        : process.env.SOAN_MECAB_COMMAND ?? 'mecab';
   const parsedRenmenPriority = parseNumber('renmenPriority', renmenPriority);
   const parsedCharsPerLine = parseInteger('charsPerLine', charsPerLine);
   const parsedLineGap = parseNumber('lineGap', lineGap);
   const parsedNumLines = typeof numLines === 'string' ? parseInteger('numLines', numLines) : undefined;
+  const parsedPageWidth = typeof pageWidth === 'string' ? parseInteger('pageWidth', pageWidth) : undefined;
+  const parsedPageHeight = typeof pageHeight === 'string' ? parseInteger('pageHeight', pageHeight) : undefined;
   const parsedCharSpacing = parseInteger('charSpacing', charSpacing);
   const parsedLineSpacing = parseInteger('lineSpacing', lineSpacing);
   const morphologyMode =
@@ -224,6 +286,12 @@ export function readCliOptions(): CliOptions | undefined {
   assertAtLeast('lineGap', parsedLineGap, 0);
   if (parsedNumLines !== undefined) {
     assertAtLeast('numLines', parsedNumLines, 1);
+  }
+  if (parsedPageWidth !== undefined) {
+    assertAtLeast('pageWidth', parsedPageWidth, 1);
+  }
+  if (parsedPageHeight !== undefined) {
+    assertAtLeast('pageHeight', parsedPageHeight, 1);
   }
   assertAtLeast('charSpacing', parsedCharSpacing, -99);
   assertAtLeast('lineSpacing', parsedLineSpacing, -99);
@@ -249,10 +317,16 @@ export function readCliOptions(): CliOptions | undefined {
     marginLeft: parsedMarginLeft,
     marginRight: parsedMarginRight,
     height: values.height === 'fit' ? 'fit' : 'auto',
+    pageWidth: parsedPageWidth,
+    pageHeight: parsedPageHeight,
     numLines: parsedNumLines,
     charSpacing: parsedCharSpacing,
     lineSpacing: parsedLineSpacing,
     morphologyMode,
+    morphologyEngine: morphologyMode === 'old-japanese' ? 'mecab-unidic-chuko' : 'kuromoji',
+    mecabDictionaryPath,
+    mecabCommand,
+    manualPositions: parseManualPositions(manualPositionsRaw),
     fontFamily,
     fontColor,
     scale: parsedScale,

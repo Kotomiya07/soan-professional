@@ -37,6 +37,20 @@ declare namespace Soan {
     readonly position: number;
   }
 
+  interface MorphologyToken {
+    readonly line: number;
+    readonly surface: string;
+    readonly reading: string;
+    readonly lemma: string;
+    readonly pos: string;
+  }
+
+  interface ManualPosition {
+    readonly position: number;
+    readonly offsetX: number;
+    readonly offsetY: number;
+  }
+
   interface SoanConfig {
     /** 利用する古活字データセット情報の配列 */
     datasets?: readonly DatasetConfig[];
@@ -60,6 +74,10 @@ declare namespace Soan {
     marginRight?: number;
     /** 'auto': 字詰数に応じた縦幅、'fit': 折り返しなし時は成り行き行長。default: 'auto' */
     height?: 'auto' | 'fit';
+    /** Professional: 出力ページ幅（px）。 */
+    pageWidth?: number;
+    /** Professional: 出力ページ高さ（px）。 */
+    pageHeight?: number;
     /** 古活字画像が登録されていない文字に利用されるフォントファミリー名。default: 'serif' */
     fontFamily?: string;
     /** 古活字画像が登録されていない文字に利用されるフォント色。default: '#000000' */
@@ -80,6 +98,10 @@ declare namespace Soan {
     lineSpacing?: number;
     /** Professional: 古文表記保持モード。 */
     morphologyMode?: 'modern' | 'old-japanese';
+    /** Professional: MeCab / 中古和文UniDic 解析結果。 */
+    professionalMorphologyTokens?: readonly MorphologyToken[];
+    /** Professional: glyphごとの手動位置調整。 */
+    manualPositions?: readonly ManualPosition[];
   }
 
   interface RenderOptions extends SoanConfig {
@@ -111,6 +133,10 @@ declare namespace Soan {
     readonly available: boolean;
     readonly isFallback: boolean;
     readonly jibo?: string;
+    readonly x?: number;
+    readonly y?: number;
+    readonly width?: number;
+    readonly height?: number;
   }
 
   interface RenderResult {

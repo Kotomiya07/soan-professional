@@ -15,7 +15,8 @@
     "test": "vitest run",
     "smoke": "node dist/cli.js --text \"か［加］/な\" --seed 42 --gamma 1.1 --generated-at 2026-06-29T00:00:00.000Z --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force",
     "test:e2e": "node test/cli-e2e.mjs",
-    "check": "npm run test && npm run build && npm run test:e2e && npm run smoke",
+    "check:mecab": "nix shell nixpkgs#mecab -c npm run test:e2e",
+    "check": "npm run test && npm run build && npm run check:mecab && npm run smoke",
     "prepack": "npm run build"
   },
   "dependencies": {

@@ -126,6 +126,8 @@ run([
   '--kobun',
   '--seed',
   '3',
+  '--mecab-dic',
+  '../dictionaries/unidic-chuko-v202512',
   '--generated-at',
   '2026-06-29T00:00:00.000Z',
   '--output',
@@ -160,6 +162,12 @@ run([
   '4',
   '--line-spacing',
   '15',
+  '--page-width',
+  '600',
+  '--page-height',
+  '900',
+  '--manual-positions',
+  '[{"position":0,"offsetX":12,"offsetY":-8}]',
   '--height',
   'fit',
   '--scale',
@@ -191,11 +199,17 @@ assert(xmpNamespaceCount === 1, 'JPEG should contain exactly one XMP namespace m
 assert(id.selectedGlyphs[0].glyphId === 1, 'dataset-wide ID directive did not select glyph ID 1');
 assert(id.xmp.embedded === false && id.xmp.reason.includes('PNG'), 'PNG XMP sidecar status is wrong');
 assert(kobun.soanConfig.morphologyMode === 'old-japanese', 'kobun mode was not recorded');
+assert(kobun.soanConfig.morphologyEngine === 'mecab-unidic-chuko', 'MeCab morphology engine was not recorded');
+assert(kobun.morphologyTokens.some((token) => token.surface === 'けふ'), 'MeCab morphology tokens were not recorded');
 assert(layout.soanConfig.numLines === 1, 'numLines was not recorded');
+assert(layout.soanConfig.pageWidth === 600, 'pageWidth was not recorded');
+assert(layout.soanConfig.pageHeight === 900, 'pageHeight was not recorded');
 assert(layout.soanConfig.charSpacing === 4, 'charSpacing was not recorded');
 assert(layout.soanConfig.lineSpacing === 15, 'lineSpacing was not recorded');
 assert(layout.soanConfig.height === 'fit', 'height=fit was not recorded');
 assert(layout.soanConfig.scale === 1.2, 'scale was not recorded');
+assert(layout.manualPositions[0].offsetX === 12 && layout.manualPositions[0].offsetY === -8, 'manual positions were not recorded');
+assert(layout.selectedGlyphs[0].x !== undefined && layout.selectedGlyphs[0].y !== undefined, 'rendered glyph positions were not recorded');
 assert(sha256('deterministic-a.jpg') === sha256('deterministic-b.jpg'), 'same seed and generatedAt did not produce identical JPEG bytes');
 
 for (const name of ['plain.jpg', 'boundary.jpg', 'jibo-xmp.jpg', 'id.png', 'kobun.jpg', 'layout.jpg']) {

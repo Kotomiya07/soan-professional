@@ -1,0 +1,17 @@
+{
+  "name": "@soan-professional/core",
+  "version": "2.0.0",
+  "description": "Renderer-independent core contracts for Soan Professional CLI",
+  "license": "MIT",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json"
+  }
+}

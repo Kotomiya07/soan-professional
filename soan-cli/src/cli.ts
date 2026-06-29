@@ -6,6 +6,7 @@ import { assertOutputWritable, ensureParentDirectory, writeImageBuffer } from '.
 import { generateImage, soanConfigFromOptions } from './render.js';
 import type { CliOptions, GenerationMetadata, SelectedGlyphMetadata, SoanRenderedGlyph } from './types.js';
 import { tryInjectXmpMetadata } from './xmp.js';
+import { analyzeWithMecab } from './mecab.js';
 
 function glyphIdFromUrl(url: string): number | undefined {
   const fallbackMatch = url.match(/(?:^|\/)(\d+)-/);
@@ -73,6 +74,13 @@ async function main(): Promise<void> {
 
   const parsed = parseExtendedText(options.text);
   const effectiveOptions = optionsWithNumLinesApplied(options, parsed.renderText);
+  const morphologyTokens =
+    effectiveOptions.morphologyMode === 'old-japanese'
+      ? await analyzeWithMecab(parsed.renderText, {
+          command: effectiveOptions.mecabCommand ?? 'mecab',
+          dictionaryPath: effectiveOptions.mecabDictionaryPath ?? '',
+        })
+      : undefined;
   const soanConfig = {
     ...soanConfigFromOptions(effectiveOptions),
     renmenPriority: parsed.directives.length > 0 ? 0 : effectiveOptions.renmenPriority,
@@ -87,6 +95,8 @@ async function main(): Promise<void> {
     format: options.format,
     directives: parsed.directives,
     boundaries: parsed.boundaries,
+    morphologyTokens,
+    manualPositions: effectiveOptions.manualPositions,
     xmp: { embedded: false, reason: 'pending-render' },
     soanConfig,
     generatedAt: options.generatedAt,

@@ -8,6 +8,7 @@
 node_modules/
 soan-cli/node_modules/
 soan-cli/dist/
+packages/*/dist/
 
 # CLI smoke-test/generated outputs
 soan-cli/tmp/
@@ -15,6 +16,7 @@ soan-cli/tmp/
 # Large source datasets are kept out of git for now.
 # Add a small fixture directory later when local dataset tests are introduced.
 datasets/
+dictionaries/
 
 # Downloaded release archives; source is kept unpacked under package/ and soan-cli/.
 *.tgz

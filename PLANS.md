@@ -75,8 +75,23 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 - Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする
 - `［ID］` は設定済み dataset と同梱 fallback 画像から解決する。未指定 dataset をネットワーク探索する汎用 global registry は持たない
 - sidecar JSON が canonical metadata。JPEG XMP は同じ metadata packet の埋め込みを行うが、PNG は sidecar のみ
-- `--old-japanese` は表記保持の互換モードであり、MeCab/中古和文 UniDic 連携ではない
+- `--old-japanese` は MeCab/中古和文 UniDic を利用する。辞書はローカル開発時 `dictionaries/unidic-chuko-v202512`、配布先では `--mecab-dic` で指定する
 - PixiJS インタラクティブ編集は CLI package の範囲外
+
+## 2026-06-30 Professional残機能移植メモ
+
+ユーザー提供の `unidic-chuko-v202512` を `dictionaries/unidic-chuko-v202512` へ移動し、Nix の `mecab` と組み合わせて利用する構成にした。PixiJS編集UI以外の残件として MeCab / 中古和文 UniDic、page layout / manual positioning、demo / core monorepo を実装した。
+
+改善済み:
+- `--old-japanese` / `--kobun` は `mecab -d <dict> -O unidic` を呼び、解析 token を metadata と renderer に渡す
+- `--mecab-dic`, `--mecab-command`, `SOAN_MECAB_DIC`, `SOAN_MECAB_COMMAND` を追加
+- renderer は `professionalMorphologyTokens` を使って古文 token 境界と品詞を反映する
+- `--page-width`, `--page-height` を追加し、canvas page size を明示指定できるようにした
+- `--manual-positions '[{"position":0,"offsetX":12,"offsetY":-8}]'` を追加し、renderer draw位置と selectedGlyphs metadata に反映する
+- glyph metadata に `x`, `y`, `width`, `height` を追加
+- `packages/core` を追加し、page layout / manual positioning / morphology token の renderer-independent core contract を分離
+- `packages/demo` を追加し、PixiJSではない静的CLI demoを提供
+- `pixi run check` は core build と Nix MeCab shell 内の e2e を含む
 
 ## 概要
 

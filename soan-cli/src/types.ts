@@ -27,6 +27,20 @@ export interface BoundaryDirective {
   readonly position: number;
 }
 
+export interface MorphologyToken {
+  readonly line: number;
+  readonly surface: string;
+  readonly reading: string;
+  readonly lemma: string;
+  readonly pos: string;
+}
+
+export interface ManualPosition {
+  readonly position: number;
+  readonly offsetX: number;
+  readonly offsetY: number;
+}
+
 export interface ParsedExtendedText {
   readonly sourceText: string;
   readonly renderText: string;
@@ -45,10 +59,16 @@ export interface SoanConfig {
   marginLeft: number;
   marginRight: number;
   height: 'auto' | 'fit';
+  pageWidth?: number;
+  pageHeight?: number;
   numLines?: number;
   charSpacing: number;
   lineSpacing: number;
   morphologyMode: MorphologyMode;
+  morphologyEngine: 'kuromoji' | 'mecab-unidic-chuko' | 'surface-preserving';
+  mecabDictionaryPath?: string;
+  mecabCommand?: string;
+  manualPositions?: readonly ManualPosition[];
   fontFamily: string;
   fontColor: string;
   scale: number;
@@ -65,6 +85,7 @@ export interface CliOptions extends SoanConfig {
   gamma: number;
   seed?: number;
   generatedAt: string;
+  manualPositions: readonly ManualPosition[];
   format: OutputFormat;
   quality: number;
 }
@@ -81,6 +102,8 @@ export interface GenerationMetadata {
   readonly boundaries: readonly BoundaryDirective[];
   readonly renderedGlyphs?: readonly SoanRenderedGlyph[];
   readonly selectedGlyphs?: readonly SelectedGlyphMetadata[];
+  readonly morphologyTokens?: readonly MorphologyToken[];
+  readonly manualPositions?: readonly ManualPosition[];
   readonly image?: ImageMetadata;
   readonly xmp: XmpMetadata;
   readonly soanConfig: SoanConfig;
@@ -101,6 +124,10 @@ export interface SoanRenderedGlyph {
   readonly available: boolean;
   readonly isFallback: boolean;
   readonly jibo?: string;
+  readonly x?: number;
+  readonly y?: number;
+  readonly width?: number;
+  readonly height?: number;
 }
 
 export interface SelectedGlyphMetadata extends SoanRenderedGlyph {
@@ -128,6 +155,10 @@ export interface SoanRenderOptions {
   charSpacing?: number;
   lineSpacing?: number;
   morphologyMode?: MorphologyMode;
+  professionalMorphologyTokens?: readonly MorphologyToken[];
+  pageWidth?: number;
+  pageHeight?: number;
+  manualPositions?: readonly ManualPosition[];
   professionalDirectives?: readonly ProDirective[];
   professionalBoundaries?: readonly BoundaryDirective[];
 }

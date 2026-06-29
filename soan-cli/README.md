@@ -2,7 +2,7 @@
 
 `soan-professional-cli` is a TypeScript CLI for generating Soan images with the Professional control surface that can be supported by the Soan v1.1.0 compatibility renderer.
 
-The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Professional controls. v2.0.0 is a CLI compatibility release, not a full browser/PixiJS Professional editor port.
+The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Professional controls. v2.0.0 covers the CLI/core/demo surface; PixiJS browser editing is outside this package.
 
 - full-width bracket Pro notation: `か［加］な` and `か［1］`, enforced during glyph selection
 - slash boundaries: `はな/の`, enforced as manual bunsetsu split points
@@ -10,7 +10,9 @@ The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Prof
 - byte-level reproducible XMP JPEGs when `--generated-at` is fixed
 - gamma post-processing with `--gamma`
 - v1.2 layout controls: `--num-lines`, `--char-spacing`, and `--line-spacing`
-- old Japanese surface-preserving mode with `--old-japanese` / `--kobun`
+- MeCab / Chuko-Wabun UniDic analysis with `--old-japanese` / `--kobun`
+- page layout with `--page-width` / `--page-height`
+- manual glyph offsets with `--manual-positions`
 - sidecar reproducibility metadata with `--metadata-output`, including selected glyph URLs and parsed glyph IDs
 - JPEG XMP embedding of the same Professional metadata packet
 - pixi tasks for install, test, build, and smoke generation
@@ -75,6 +77,6 @@ The CLI treats generated JSON sidecars as the canonical Professional reproducibi
 
 When a Pro glyph directive is present, the compatibility renderer sets the effective `renmenPriority` to `0` for that render and records that effective value in metadata. The upstream selector can otherwise choose multi-character renmen tokens before position-based directives are applied, which would make single-character `［字母］` / `［ID］` controls ambiguous.
 
-`--old-japanese` / `--kobun` is a compatibility CLI mode for historical text: it preserves surface text instead of converting through kuromoji readings, and works with `/` manual boundaries for cases where the modern analyzer would be a poor fit. It is not a MeCab / Chuko-Wabun UniDic integration.
+`--old-japanese` / `--kobun` uses MeCab with Chuko-Wabun UniDic when `mecab` is available and the dictionary is provided by `--mecab-dic` or `SOAN_MECAB_DIC`. The repository-local development dictionary lives at `dictionaries/unidic-chuko-v202512` and is intentionally not bundled into the npm tarball.
 
 PixiJS interactive editing is not part of the v2.0.0 CLI package.
