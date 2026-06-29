@@ -79,4 +79,14 @@ When a Pro glyph directive is present, the compatibility renderer sets the effec
 
 `--old-japanese` / `--kobun` uses MeCab with Chuko-Wabun UniDic when `mecab` is available and the dictionary is provided by `--mecab-dic` or `SOAN_MECAB_DIC`. The repository-local development dictionary lives at `dictionaries/unidic-chuko-v202512` and is intentionally not bundled into the npm tarball.
 
+Download the dictionary from the separate GitHub Release asset:
+
+```bash
+curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz
+curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz.sha256
+sha256sum -c unidic-chuko-v202512.tar.gz.sha256
+tar -xzf unidic-chuko-v202512.tar.gz
+export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
+```
+
 PixiJS interactive editing is not part of the v2.0.0 CLI package.

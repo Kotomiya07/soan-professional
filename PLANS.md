@@ -78,6 +78,11 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 - `--old-japanese` は MeCab/中古和文 UniDic を利用する。辞書はローカル開発時 `dictionaries/unidic-chuko-v202512`、配布先では `--mecab-dic` で指定する
 - PixiJS インタラクティブ編集は CLI package の範囲外
 
+辞書配布:
+- GitHub Release `dict-chuko-v202512` に `unidic-chuko-v202512.tar.gz` と `.sha256` をアップロード
+- URL: `https://github.com/Kotomiya07/soan-professional/releases/tag/dict-chuko-v202512`
+- 辞書は CC BY-NC-SA 4.0 のため npm package には同梱せず、release asset として分離
+
 ## 2026-06-30 Professional残機能移植メモ
 
 ユーザー提供の `unidic-chuko-v202512` を `dictionaries/unidic-chuko-v202512` へ移動し、Nix の `mecab` と組み合わせて利用する構成にした。PixiJS編集UI以外の残件として MeCab / 中古和文 UniDic、page layout / manual positioning、demo / core monorepo を実装した。
