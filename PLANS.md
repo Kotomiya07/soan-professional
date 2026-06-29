@@ -54,6 +54,23 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - packed tarball を `/private/tmp/soan-pack-final.cVrjHw` へ install し、`npx soan --text 'か［1］' ...` と `npx soan --text 'けふ/こそ' --kobun ...` が成功。tarball 経由でも dataset 全体 ID 逆引きと古文表記保持モードが動作することを確認
 - 長文 JPEG smoke: `か` 1200字入力で XMP APP1 上限を超えても CLI が失敗せず JPEG と sidecar を生成し、`xmp.embedded: false` と理由を記録することを確認
 
+## 2026-06-30 Professional CLI移植監査メモ
+
+sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-state 監査を実施した。結論は、Professional 全体移植としては PixiJS 編集 UI、MeCab / 中古和文 UniDic、page layout / manual positioning、demo / core monorepo が未実装であり未達。一方、CLI互換リリースとして公開するには、証拠が弱い e2e gate といくつかの実装上の blocker を潰せば現実的、という評価。
+
+改善済み:
+- `--generated-at` を追加し、metadata timestamp を固定できるようにした。同一 `--seed` と同一 `--generated-at` なら XMP込みJPEG bytes も再現できる
+- PRNG を計画記載に合わせ、BigInt ベースの xorshift128+ 実装へ変更
+- `［４８６７］` のような全角数字 directive を NFKC 正規化して ID として扱う
+- 同一 render position への複数 Pro directive は黙って無視せず parse 時点で失敗する
+- stdout data URL 出力時に Soan 起動バナーが混入しないようにした
+- Pro directive があるときの実効 `renmenPriority: 0` を sidecar `soanConfig` に記録し、再現性 metadata と実レンダリング条件のズレを解消
+- JPEG 生成時は upstream Soan XMP を使わず、CLI の Professional XMP を単一 APP1 packet として注入するようにした
+- `--force` なしでは image だけでなく sidecar metadata も既存ファイルを上書きしない
+- 古い `soan-cli/soan-cli.js` を削除し、TypeScript CLI に一本化
+- `package/soan/soan.d.ts` に Professional option と render result の型契約を追加
+- `npm run test:e2e` を追加し、Pro jibo / ID / slash boundary / kobun / layout / JPEG XMP / PNG sidecar / stdout / force保護 / deterministic bytes を自動検証
+
 現時点の制限:
 - Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする
 - `［ID］` は設定済み dataset と同梱 fallback 画像から解決する。未指定 dataset をネットワーク探索する汎用 global registry は持たない

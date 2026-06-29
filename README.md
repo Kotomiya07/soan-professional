@@ -1,6 +1,6 @@
 # soan-professional-cli v2.0.0
 
-Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。
+Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 は CLI 互換リリースであり、ブラウザ編集 UI や MeCab / 中古和文 UniDic 解析を含む Professional 全体の完全移植ではありません。
 
 ## 現在の公開単位
 
@@ -14,7 +14,8 @@ Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジン
 
 - Pro 記法 `［字母］` / `［ID］` の実レンダリング反映
 - `/` による手動 bunsetsu / renmen 境界
-- `--seed` による再現性
+- `--seed` による glyph / layout 選択の再現性
+- `--generated-at` による metadata timestamp 固定と XMP 込み JPEG の byte-level 再現性
 - `--gamma` による出力画像のガンマ補正
 - `--num-lines`, `--char-spacing`, `--line-spacing` による v1.2 CLI 組版制御
 - `--old-japanese` / `--kobun` による古文表記保持モード
@@ -32,7 +33,7 @@ pixi run install
 pixi run check
 ```
 
-`pixi run check` は `test`, `build`, `smoke` を実行します。
+`pixi run check` は unit test, build, CLI e2e, smoke を実行します。
 
 ## 基本コマンド
 
@@ -42,6 +43,7 @@ cd soan-cli
 node dist/cli.js \
   --text "か［加］/な" \
   --seed 42 \
+  --generated-at 2026-06-29T00:00:00.000Z \
   --gamma 1.1 \
   --output ./tmp/sample.jpg \
   --metadata-output ./tmp/sample.json \
@@ -67,6 +69,7 @@ node dist/cli.js \
 pixi run check
 npm --prefix soan-cli audit --omit=dev
 cd soan-cli
+npm run test:e2e
 npm --cache ./tmp/npm-cache pack --dry-run
 npm --cache ./tmp/npm-cache publish --dry-run
 ```
@@ -96,11 +99,13 @@ npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata
 
 ## メタデータ契約
 
-`--metadata-output` の sidecar JSON が v2.0.0 の canonical reproducibility record です。JPEG には同じ Professional metadata JSON を XMP として埋め込みます。XMP が JPEG APP1 のサイズ上限を超える場合は compact XMP を試し、それでも大きい場合は JPEG と sidecar を出力したうえで `xmp.embedded: false` と理由を記録します。PNG は sidecar JSON のみを正式記録とします。
+`--metadata-output` の sidecar JSON が v2.0.0 の canonical reproducibility record です。JPEG には同じ Professional metadata JSON を単一の APP1 XMP packet として埋め込みます。XMP が JPEG APP1 のサイズ上限を超える場合は compact XMP を試し、それでも大きい場合は JPEG と sidecar を出力したうえで `xmp.embedded: false` と理由を記録します。PNG は sidecar JSON のみを正式記録とします。
+
+`--seed` は glyph / layout 選択を再現するための値です。JPEG bytes まで固定したい場合は、XMP に入る timestamp も変化しないように `--generated-at <ISO timestamp>` を指定してください。
 
 ## 制限
 
-- Pro glyph 指示があるレンダリングでは、位置指定を成立させるため、その実行に限って `renmenPriority` を `0` にします。
+- Pro glyph 指示があるレンダリングでは、位置指定を成立させるため、その実行に限って実効 `renmenPriority` を `0` にします。この値は sidecar の `soanConfig.renmenPriority` にも実効値として記録します。
 - `［ID］` は設定済み dataset と同梱 fallback 画像から解決します。未指定 dataset を探索する global registry は持ちません。
 - `--old-japanese` / `--kobun` は表記保持の互換モードです。MeCab / 中古和文 UniDic 連携ではありません。
 - PixiJS interactive editing は CLI package の範囲外です。

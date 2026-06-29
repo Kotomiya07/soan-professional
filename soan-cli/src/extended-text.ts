@@ -12,7 +12,7 @@ function directivePosition(renderTextLength: number): number {
 }
 
 function parseDirective(raw: string, position: number): ProDirective {
-  const trimmed = raw.trim();
+  const trimmed = raw.trim().normalize('NFKC');
   if (trimmed === '') {
     throw new Error('Professional directive must not be empty');
   }
@@ -38,6 +38,7 @@ export function parseExtendedText(sourceText: string): ParsedExtendedText {
   const renderChars: string[] = [];
   const directives: ProDirective[] = [];
   const boundaries: BoundaryDirective[] = [];
+  const directivePositions = new Set<number>();
 
   for (let index = 0; index < sourceText.length; index += 1) {
     const char = sourceText[index];
@@ -58,7 +59,12 @@ export function parseExtendedText(sourceText: string): ParsedExtendedText {
       }
 
       const raw = sourceText.slice(index + 1, closeIndex);
-      directives.push(parseDirective(raw, directivePosition(renderChars.length)));
+      const position = directivePosition(renderChars.length);
+      if (directivePositions.has(position)) {
+        throw new Error(`Only one Professional directive can be attached to render position ${position}`);
+      }
+      directives.push(parseDirective(raw, position));
+      directivePositions.add(position);
       index = closeIndex;
       continue;
     }

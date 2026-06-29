@@ -64,6 +64,7 @@ export interface CliOptions extends SoanConfig {
   force: boolean;
   gamma: number;
   seed?: number;
+  generatedAt: string;
   format: OutputFormat;
   quality: number;
 }

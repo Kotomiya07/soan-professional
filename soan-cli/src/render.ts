@@ -81,6 +81,22 @@ async function renderWithSoan(soan: SoanInstance, metadata: GenerationMetadata, 
   );
 }
 
+function createSoanQuietly(options: CliOptions): SoanInstance | undefined {
+  const originalLog = console.log;
+  console.log = (...args: readonly unknown[]) => {
+    const [first] = args;
+    if (typeof first === 'string' && first.startsWith('Soan: Library for rendering modern Japanese')) {
+      return;
+    }
+    originalLog(...args);
+  };
+  try {
+    return createSoan(soanConfigFromOptions(options));
+  } finally {
+    console.log = originalLog;
+  }
+}
+
 export interface GeneratedImage {
   readonly buffer: Buffer;
   readonly renderedGlyphs: GenerationMetadata['renderedGlyphs'];
@@ -88,7 +104,7 @@ export interface GeneratedImage {
 }
 
 export async function generateImage(options: CliOptions, metadata: GenerationMetadata): Promise<GeneratedImage> {
-  const soan = createSoan(soanConfigFromOptions(options));
+  const soan = createSoanQuietly(options);
   if (soan === undefined) {
     throw new Error('Failed to initialize Soan');
   }
@@ -96,14 +112,10 @@ export async function generateImage(options: CliOptions, metadata: GenerationMet
   const renderResult = await renderWithSoan(soan, metadata, options.seed);
   const canvas = renderResult.opt.canvas;
 
-  // Prefer Soan's JPEG/XMP helper for the default path because it preserves
-  // the upstream metadata behavior. For PNG and gamma-adjusted output we must
-  // re-encode from pixels, so the Pro reproducibility record is emitted as a
-  // sidecar JSON file by the CLI.
-  const baseBuffer =
-    options.format === 'jpeg' && options.gamma === 1 && soan.getBufferWithXMPFromCanvasPromise !== undefined
-      ? await soan.getBufferWithXMPFromCanvasPromise(canvas)
-      : encodeCanvas(canvas, options.format, options.quality);
+  // The CLI owns Professional metadata injection after rendering. Encoding
+  // directly avoids producing an upstream Soan XMP segment plus a second CLI
+  // XMP segment in the same JPEG.
+  const baseBuffer = encodeCanvas(canvas, options.format, options.quality);
 
   return {
     buffer: await applyGammaToBuffer(baseBuffer, options.format, options.quality, options.gamma),

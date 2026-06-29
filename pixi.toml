@@ -9,5 +9,6 @@ nodejs = ">=20,<21"
 install = "npm --prefix soan-cli install"
 build = "npm --prefix soan-cli run build"
 test = "npm --prefix soan-cli test"
+e2e = "npm --prefix soan-cli run test:e2e"
 smoke = "npm --prefix soan-cli run smoke"
-check = { depends-on = ["test", "build", "smoke"] }
+check = { depends-on = ["test", "build", "e2e", "smoke"] }

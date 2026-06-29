@@ -18,6 +18,7 @@ Core options:
       --format <jpeg|png>           Output format. Default: jpeg
       --quality <0-1>               JPEG quality. Default: 0.92
       --seed <integer>              Deterministic rendering seed.
+      --generated-at <iso>          Metadata timestamp. Fix this for byte-level reproducible XMP output.
       --gamma <0.1-2.2>             Gamma correction. Default: 1
       --chars-per-line <integer>    Characters per line. Default: 20
       --line-gap <number>           Line gap. Default: 0.5
@@ -95,6 +96,8 @@ const argsConfig = {
     white: { type: 'string', default: '#ffffff', description: '古活字データセット画像の白にマッピングする描画色' },
     black: { type: 'string', default: '#000000', description: '古活字データセット画像の黒にマッピングする描画色' },
     seed: { type: 'string', description: 'Math.random を固定する再現性シード' },
+    generatedAt: { type: 'string', description: 'XMP/sidecar metadata timestamp. 固定するとXMP込みのJPEGも再現しやすい' },
+    'generated-at': { type: 'string', description: 'XMP/sidecar metadata timestamp（generatedAtの別名）' },
     gamma: { type: 'string', default: '1', description: '出力画像へのガンマ補正（0.1-2.2）' },
     format: { type: 'string', default: 'jpeg', choices: ['jpeg', 'png'], description: '出力形式' },
     quality: { type: 'string', default: '0.92', description: 'JPEG品質（0-1）' },
@@ -209,6 +212,12 @@ export function readCliOptions(): CliOptions | undefined {
   const parsedMarginRight = parseInteger('marginRight', marginRight);
   const parsedScale = parseNumber('scale', String(values.scale));
   const parsedQuality = parseNumber('quality', String(values.quality));
+  const generatedAt =
+    typeof values['generated-at'] === 'string'
+      ? values['generated-at']
+      : typeof values.generatedAt === 'string'
+        ? values.generatedAt
+        : new Date().toISOString();
 
   assertRange('renmenPriority', parsedRenmenPriority, 0, 1);
   assertAtLeast('charsPerLine', parsedCharsPerLine, 0);
@@ -251,6 +260,7 @@ export function readCliOptions(): CliOptions | undefined {
     white: String(values.white),
     black: String(values.black),
     seed,
+    generatedAt,
     gamma,
     format: format satisfies OutputFormat,
     quality: parsedQuality,

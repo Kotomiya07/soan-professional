@@ -1,4 +1,4 @@
-import { mkdirSync, writeFileSync, writeSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync, writeSync } from 'node:fs';
 import { dirname } from 'node:path';
 
 export function ensureParentDirectory(path: string | undefined): void {
@@ -9,6 +9,16 @@ export function ensureParentDirectory(path: string | undefined): void {
   const parent = dirname(path);
   if (parent !== '.') {
     mkdirSync(parent, { recursive: true });
+  }
+}
+
+export function assertOutputWritable(path: string | undefined, force: boolean): void {
+  if (path === undefined || path === '' || force) {
+    return;
+  }
+
+  if (existsSync(path)) {
+    throw new Error(`Output path already exists. Use --force to overwrite: ${path}`);
   }
 }
 

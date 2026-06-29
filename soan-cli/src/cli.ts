@@ -2,7 +2,7 @@
 import { parseExtendedText } from './extended-text.js';
 import { writeMetadata } from './metadata.js';
 import { readCliOptions } from './options.js';
-import { ensureParentDirectory, writeImageBuffer } from './output.js';
+import { assertOutputWritable, ensureParentDirectory, writeImageBuffer } from './output.js';
 import { generateImage, soanConfigFromOptions } from './render.js';
 import type { CliOptions, GenerationMetadata, SelectedGlyphMetadata, SoanRenderedGlyph } from './types.js';
 import { tryInjectXmpMetadata } from './xmp.js';
@@ -73,6 +73,10 @@ async function main(): Promise<void> {
 
   const parsed = parseExtendedText(options.text);
   const effectiveOptions = optionsWithNumLinesApplied(options, parsed.renderText);
+  const soanConfig = {
+    ...soanConfigFromOptions(effectiveOptions),
+    renmenPriority: parsed.directives.length > 0 ? 0 : effectiveOptions.renmenPriority,
+  };
   const metadataBase: GenerationMetadata = {
     engine: 'soan-v1.1.0-compat',
     professionalSlice: true,
@@ -84,12 +88,14 @@ async function main(): Promise<void> {
     directives: parsed.directives,
     boundaries: parsed.boundaries,
     xmp: { embedded: false, reason: 'pending-render' },
-    soanConfig: soanConfigFromOptions(effectiveOptions),
-    generatedAt: new Date().toISOString(),
+    soanConfig,
+    generatedAt: options.generatedAt,
   };
 
   ensureParentDirectory(options.output);
   ensureParentDirectory(options.metadataOutput);
+  assertOutputWritable(options.output, options.force);
+  assertOutputWritable(options.metadataOutput, options.force);
 
   const generated = await generateImage(effectiveOptions, metadataBase);
   const selectedGlyphs = selectedGlyphsFromRenderedGlyphs(generated.renderedGlyphs ?? []);
@@ -121,7 +127,7 @@ async function main(): Promise<void> {
   };
   const buffer = xmpResult.buffer;
   writeImageBuffer(options.output, buffer, options.force, options.format);
-  writeMetadata(options.metadataOutput, metadata);
+  writeMetadata(options.metadataOutput, metadata, options.force);
 }
 
 main().catch((error: unknown) => {

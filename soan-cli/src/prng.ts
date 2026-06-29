@@ -1,19 +1,31 @@
 export function createSeededRandom(seed: number): () => number {
-  let state = seed >>> 0;
-  if (state === 0) {
-    state = 0x6d2b79f5;
+  const mask = (1n << 64n) - 1n;
+  let splitmixState = BigInt.asUintN(64, BigInt(seed));
+
+  function splitmix64(): bigint {
+    splitmixState = (splitmixState + 0x9e3779b97f4a7c15n) & mask;
+    let value = splitmixState;
+    value = ((value ^ (value >> 30n)) * 0xbf58476d1ce4e5b9n) & mask;
+    value = ((value ^ (value >> 27n)) * 0x94d049bb133111ebn) & mask;
+    return (value ^ (value >> 31n)) & mask;
   }
 
+  let state0 = splitmix64();
+  let state1 = splitmix64();
+  if (state0 === 0n && state1 === 0n) {
+    state1 = 1n;
+  }
+
+  // xorshift128+ uses two 64-bit state words. BigInt keeps the integer
+  // transitions exact, so the sequence is stable across Node.js versions.
   return () => {
-    // Mulberry32 is compact and deterministic across Node versions because it
-    // only uses 32-bit integer operations. That matters more here than
-    // statistical strength: the seed is for reproducible glyph choices, not
-    // cryptography.
-    state = (state + 0x6d2b79f5) >>> 0;
-    let value = state;
-    value = Math.imul(value ^ (value >>> 15), value | 1);
-    value ^= value + Math.imul(value ^ (value >>> 7), value | 61);
-    return ((value ^ (value >>> 14)) >>> 0) / 4294967296;
+    const x = state0;
+    let y = state1;
+    state0 = y;
+    y ^= (y << 23n) & mask;
+    state1 = (y ^ x ^ (y >> 17n) ^ (x >> 26n)) & mask;
+    const result = (state1 + x) & mask;
+    return Number(result >> 11n) / 9007199254740992;
   };
 }
 

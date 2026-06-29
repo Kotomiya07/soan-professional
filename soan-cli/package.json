@@ -5,13 +5,17 @@
   "author": "Center for Open Data in the Humanities, Research Organization of Information and Systems",
   "contributors": [ "Jun HOMMA (https://www.flxstyle.com/)" ],
   "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
   "main": "dist/cli.js",
   "types": "dist/cli.d.ts",
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "test": "vitest run",
-    "smoke": "node dist/cli.js --text \"サンプル［15338］/かな\" --seed 42 --gamma 1.1 --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force",
-    "check": "npm run test && npm run build && npm run smoke",
+    "smoke": "node dist/cli.js --text \"か［加］/な\" --seed 42 --gamma 1.1 --generated-at 2026-06-29T00:00:00.000Z --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force",
+    "test:e2e": "node test/cli-e2e.mjs",
+    "check": "npm run test && npm run build && npm run test:e2e && npm run smoke",
     "prepack": "npm run build"
   },
   "dependencies": {
