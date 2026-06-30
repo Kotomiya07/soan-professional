@@ -114,3 +114,49 @@ jobs:
           soan-pro --version | grep "^${version}$"
           soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
           node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1);" "$tmpdir/jibo.json"
+
+  package-smoke:
+    name: Package smoke (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - ubuntu-latest
+          - macos-latest
+          - windows-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v5
+        with:
+          node-version: '20'
+          cache: npm
+          cache-dependency-path: soan-cli/package-lock.json
+
+      - name: Install npm dependencies
+        run: npm --prefix soan-cli ci
+
+      - name: Build CLI
+        run: npm --prefix soan-cli run build
+
+      - name: Packed global install smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./soan-cli/package.json').version")"
+          packfile="$(cd soan-cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
+          tmpdir="$(mktemp -d)"
+          npm --prefix "$tmpdir" install -g "$RUNNER_TEMP/$packfile"
+          if [ -d "$tmpdir/bin" ]; then
+            PATH="$tmpdir/bin:$PATH"
+          else
+            PATH="$tmpdir:$PATH"
+          fi
+          soan --version | grep "^${version}$"
+          soan-cli --version | grep "^${version}$"
+          soan-pro --version | grep "^${version}$"
+          soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
+          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1);" "$tmpdir/jibo.json"
