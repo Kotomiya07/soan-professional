@@ -98,3 +98,9 @@ npm publish --access public --dry-run
 - PixiJS interactive editing is not part of the v2.0.0 CLI package.
 - When a Pro glyph directive is present, the compatibility renderer sets the effective `renmenPriority` to `0` for that render and records that value in metadata.
 - The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.
+
+## Acknowledgements
+
+This package builds on [Soan](https://codh.rois.ac.jp/software/soan/), a CODH JavaScript library for rendering modern Japanese text with old movable type images.
+
+The CLI control surface is based on [Soan Professional](https://dev.2sc1815j.net/soan/), an extended Soan workflow that adds bracket-based jibo/glyph controls, slash boundaries, classical Japanese analysis, seed control, glyph position adjustment, and glyph search/replacement.

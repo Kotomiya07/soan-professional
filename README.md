@@ -128,6 +128,14 @@ npm publish --access public --dry-run
 - Pro glyph directives set the effective `renmenPriority` to `0` for that render so position-based single-glyph controls stay unambiguous.
 - `［ID］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
 
+## Acknowledgements
+
+This project builds on [Soan](https://codh.rois.ac.jp/software/soan/), a JavaScript library from the Center for Open Data in the Humanities (CODH) for rendering modern Japanese text with old movable type images.
+
+The CLI control surface is based on [Soan Professional](https://dev.2sc1815j.net/soan/), an extended Soan workflow that adds bracket-based jibo/glyph controls, slash boundaries, classical Japanese analysis, seed control, glyph position adjustment, and glyph search/replacement.
+
+Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0. See the dictionary README included in the release asset for attribution and license details.
+
 ## License
 
 The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.

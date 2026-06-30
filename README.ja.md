@@ -128,6 +128,14 @@ npm publish --access public --dry-run
 - Pro glyph指示があるレンダリングでは、位置指定を曖昧にしないため、その実行に限って実効 `renmenPriority` を `0` にします。
 - `［ID］` は設定済みdatasetと同梱fallback画像から解決します。CLIはglobal dataset registryを提供しません。
 
+## 謝辞・参照
+
+本プロジェクトは、ROIS-DS人文学オープンデータ共同利用センター（CODH）のJavaScriptライブラリ [そあん（soan）](https://codh.rois.ac.jp/software/soan/) を基盤にしています。Soanは、古活字画像を用いて現代日本語テキストを描画するライブラリです。
+
+CLIのProfessional制御面は、[そあん（soan）プロフェッショナル版](https://dev.2sc1815j.net/soan/) のワークフローを参考にしています。プロフェッショナル版では、全角角括弧による字母・字形指定、スラッシュによる形態素解析の切れ目指定、古文モード、シード値、古活字画像の位置調整、検索・差し替えなどが提供されています。
+
+中古和文UniDicはCC BY-NC-SA 4.0で別配布されます。attributionとlicense詳細は、release asset内の辞書READMEを確認してください。
+
 ## License
 
 CLI packageはMIT licenseです。中古和文UniDicは別途CC BY-NC-SA 4.0で配布されます。
