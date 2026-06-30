@@ -40,10 +40,24 @@ function assert(condition, message) {
 
 run(['--version']);
 run(['--help']);
-const downloadHelpResult = run(['download-dict', '--help']);
+const downloadHelpResult = run(['dict', '--help']);
 assert(
-  downloadHelpResult.stdout.includes('soan download-dict [--output <dir>] [--force]'),
-  'download-dict help did not describe usage',
+  downloadHelpResult.stdout.includes('soan dict install [--output <dir>] [--force]'),
+  'dict help did not describe usage',
+);
+const dictPathResult = run(['dict', 'path', '--output', workdir]);
+assert(
+  dictPathResult.stdout.trim().endsWith('unidic-chuko-v202512'),
+  'dict path did not print the expected dictionary directory',
+);
+const removedDownloadDictResult = spawnSync(process.execPath, [cli, 'download-dict', '--help'], {
+  cwd: repoRoot,
+  encoding: 'utf8',
+});
+assert(removedDownloadDictResult.status !== 0, 'removed download-dict command should fail');
+assert(
+  removedDownloadDictResult.stderr.includes('soan dict install'),
+  'removed download-dict command should point to soan dict install',
 );
 
 const stdoutResult = run([

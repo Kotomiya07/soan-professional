@@ -39,7 +39,7 @@ jobs:
         run: npm --prefix soan-cli run build
 
       - name: Download Chuko-Wabun UniDic
-        run: node soan-cli/dist/cli.js download-dict --output dictionaries
+        run: node soan-cli/dist/cli.js dict install --output dictionaries
 
       - name: Check formatting
         run: npm --prefix soan-cli run format:check

@@ -4,7 +4,7 @@
 [![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.1.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.2.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![English](https://img.shields.io/badge/README-English-blue)](./README.md)
@@ -53,11 +53,12 @@ soan \
 辞書はnpm packageには同梱していません。GitHub Release assetとして別配布します。中古和文UniDicは、このCLI本体のMIT licenseとは別にCC BY-NC-SA 4.0で配布されます。非営利・継承条件と attribution は、展開後の `unidic-chuko-v202512/README.md` を確認してください。
 
 ```bash
-soan download-dict --output ./dictionaries
+soan dict install --output ./dictionaries
 export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
 ```
 
 このコマンドはrelease assetをダウンロードし、固定SHA-256、archive path safetyを検証してから辞書を展開します。
+ローカル辞書を固定releaseで置き換える場合は `soan dict update --output ./dictionaries`、scriptから辞書パスだけ確認する場合は `soan dict path --output ./dictionaries` を使います。
 
 `--kobun` または `--old-japanese` と一緒に使います。
 
@@ -89,7 +90,7 @@ soan \
 
 ## メタデータ
 
-`--metadata-output` のsidecar JSONがv1.1.0のcanonical reproducibility recordです。JPEGには同じProfessional metadata JSONを単一のAPP1 XMP packetとして埋め込みます。XMPがJPEG APP1のサイズ上限を超える場合はcompact XMPを試し、それでも大きい場合はJPEGとsidecarを出力したうえで `xmp.embedded: false` と理由を記録します。
+`--metadata-output` のsidecar JSONがv1.2.0のcanonical reproducibility recordです。JPEGには同じProfessional metadata JSONを単一のAPP1 XMP packetとして埋め込みます。XMPがJPEG APP1のサイズ上限を超える場合はcompact XMPを試し、それでも大きい場合はJPEGとsidecarを出力したうえで `xmp.embedded: false` と理由を記録します。
 
 `--seed` はglyph / layout選択を再現するための値です。JPEG bytesまで固定したい場合は、XMPに入るtimestampも変化しないように `--generated-at <ISO timestamp>` を指定してください。
 
@@ -124,7 +125,7 @@ release tagの公開はGitHub Actionsで行います。npmへの公開はGitHub 
 
 ## スコープ
 
-- PixiJS interactive editingはv1.1.0 CLI packageの範囲外です。
+- PixiJS interactive editingはv1.2.0 CLI packageの範囲外です。
 - Pro glyph指示があるレンダリングでは、位置指定を曖昧にしないため、その実行に限って実効 `renmenPriority` を `0` にします。
 - `［ID］` は設定済みdatasetと同梱fallback画像から解決します。CLIはglobal dataset registryを提供しません。
 

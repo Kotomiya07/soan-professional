@@ -14,12 +14,24 @@ import type {
 import { tryInjectXmpMetadata } from './xmp.js';
 import { analyzeWithMecab } from './mecab.js';
 import { parseArgs } from 'node:util';
+import { join, resolve } from 'node:path';
 
-function printDownloadDictionaryHelp(): void {
-  console.log(`soan download-dict
+function dictionaryPathFromOutput(outputDirectory: string): string {
+  return join(resolve(outputDirectory), 'unidic-chuko-v202512');
+}
+
+function printDictionaryHelp(): void {
+  console.log(`soan dict
 
 Usage:
-  soan download-dict [--output <dir>] [--force]
+  soan dict install [--output <dir>] [--force]
+  soan dict update [--output <dir>]
+  soan dict path [--output <dir>]
+
+Commands:
+  install  Download and extract Chuko-Wabun UniDic.
+  update   Replace the local Chuko-Wabun UniDic with the current pinned release.
+  path     Print the expected Chuko-Wabun UniDic directory path.
 
 Options:
   -o, --output <dir>  Parent directory. Default: ./dictionaries
@@ -86,28 +98,52 @@ function optionsWithNumLinesApplied(options: CliOptions, renderText: string): Cl
 }
 
 async function main(): Promise<void> {
-  if (process.argv[2] === 'download-dict' || process.argv[2] === 'download-dictionary') {
-    if (process.argv.includes('--help') || process.argv.includes('-h')) {
-      printDownloadDictionaryHelp();
+  const isDictionaryCommand = process.argv[2] === 'dict';
+  if (isDictionaryCommand) {
+    const command = process.argv[3] ?? 'help';
+    const args = process.argv.slice(4);
+
+    if (
+      command === 'help' ||
+      command === '--help' ||
+      command === '-h' ||
+      args.includes('--help') ||
+      args.includes('-h')
+    ) {
+      printDictionaryHelp();
       return;
     }
 
+    if (command !== 'install' && command !== 'update' && command !== 'path') {
+      throw new Error(`Unknown dictionary command: ${command}`);
+    }
+
     const { values } = parseArgs({
-      args: process.argv.slice(3),
+      args,
       options: {
         output: { type: 'string', short: 'o', default: 'dictionaries' },
         force: { type: 'boolean', default: false },
       },
       allowPositionals: false,
     });
+
+    if (command === 'path') {
+      console.log(dictionaryPathFromOutput(values.output));
+      return;
+    }
+
     const result = await downloadChukoDictionary({
       outputDirectory: values.output,
-      force: values.force,
+      force: command === 'update' ? true : values.force,
     });
     console.log(`Downloaded Chuko-Wabun UniDic: ${result.dictionaryPath}`);
     console.log(`SHA-256: ${result.sha256}`);
     console.log(`Use with: soan --kobun --mecab-dic "${result.dictionaryPath}" --text <text>`);
     return;
+  }
+
+  if (process.argv[2] === 'download-dict' || process.argv[2] === 'download-dictionary') {
+    throw new Error('Unknown command. Use: soan dict install [--output <dir>] [--force]');
   }
 
   if (
