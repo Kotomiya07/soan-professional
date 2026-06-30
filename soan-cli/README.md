@@ -93,6 +93,8 @@ npm pack --dry-run
 npm publish --access public --dry-run
 ```
 
+Release tags are published by GitHub Actions. npm publication uses npm Trusted Publishing with GitHub Actions OIDC, and GitHub Packages publication uses the workflow `GITHUB_TOKEN`.
+
 ## Notes
 
 - PixiJS interactive editing is not part of the v1.0.0 CLI package.

@@ -22,7 +22,7 @@ jobs:
       - name: Set up Node.js
         uses: actions/setup-node@v5
         with:
-          node-version: '20'
+          node-version: '24'
           registry-url: https://registry.npmjs.org
           cache: npm
           cache-dependency-path: soan-cli/package-lock.json
@@ -114,17 +114,9 @@ jobs:
           } >> "$NPM_CONFIG_USERCONFIG"
           npm publish --access public --registry=https://npm.pkg.github.com --dry-run
 
-      - name: Check npm token
-        if: ${{ github.event_name == 'push' && steps.npmjs.outputs.published != 'true' }}
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-        run: test -n "$NODE_AUTH_TOKEN"
-
       - name: Publish to npm
         if: ${{ github.event_name == 'push' && steps.npmjs.outputs.published != 'true' }}
         working-directory: soan-cli
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
 
       - name: Publish to GitHub Packages

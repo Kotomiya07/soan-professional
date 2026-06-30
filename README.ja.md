@@ -113,6 +113,8 @@ npm pack --dry-run
 npm publish --access public --dry-run
 ```
 
+release tagの公開はGitHub Actionsで行います。npmへの公開はGitHub Actions OIDCによるnpm Trusted Publishingを使い、GitHub Packagesへの公開はworkflowの `GITHUB_TOKEN` を使います。
+
 ## ディレクトリ
 
 - `soan-cli/`: npm package本体
