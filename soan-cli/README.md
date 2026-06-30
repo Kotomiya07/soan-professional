@@ -3,7 +3,7 @@
 [![CI](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.0.1-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.1.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](https://github.com/Kotomiya07/soan-professional/blob/main/README.ja.md)
@@ -43,19 +43,17 @@ soan \
 `--old-japanese` / `--kobun` uses MeCab with Chuko-Wabun UniDic when `mecab` is available and the dictionary is provided by `--mecab-dic` or `SOAN_MECAB_DIC`. The dictionary is distributed separately from the npm package and is licensed under CC BY-NC-SA 4.0.
 
 ```bash
-expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
-curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz
-echo "${expected_sha256}  unidic-chuko-v202512.tar.gz" | sha256sum -c -
-tar -tzf unidic-chuko-v202512.tar.gz | awk '/(^|\/)\.\.($|\/)|^\// { print "unsafe tar path: " $0 > "/dev/stderr"; bad=1 } END { exit bad }'
-tar -xzf unidic-chuko-v202512.tar.gz
-export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
+soan download-dict --output ./dictionaries
+export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
 ```
+
+The command downloads the release asset, verifies the pinned SHA-256, checks the archive paths, and extracts the dictionary.
 
 ```bash
 soan \
   --text "けふ/こそ" \
   --kobun \
-  --mecab-dic ./unidic-chuko-v202512 \
+  --mecab-dic ./dictionaries/unidic-chuko-v202512 \
   --seed 5 \
   --output ./kobun.jpg \
   --metadata-output ./kobun.json \
@@ -97,7 +95,7 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 ## Notes
 
-- PixiJS interactive editing is not part of the v1.0.1 CLI package.
+- PixiJS interactive editing is not part of the v1.1.0 CLI package.
 - When a Pro glyph directive is present, the compatibility renderer sets the effective `renmenPriority` to `0` for that render and records that value in metadata.
 - The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.
 

@@ -40,6 +40,11 @@ function assert(condition, message) {
 
 run(['--version']);
 run(['--help']);
+const downloadHelpResult = run(['download-dict', '--help']);
+assert(
+  downloadHelpResult.stdout.includes('soan download-dict [--output <dir>] [--force]'),
+  'download-dict help did not describe usage',
+);
 
 const stdoutResult = run([
   '--text',

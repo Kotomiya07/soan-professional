@@ -4,7 +4,7 @@
 [![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.0.1-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.1.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](./README.ja.md)
@@ -53,13 +53,11 @@ The package provides three equivalent command names:
 The dictionary is distributed as a separate GitHub Release asset and is not bundled into the npm package. Chuko-Wabun UniDic is licensed under CC BY-NC-SA 4.0, separately from this CLI package's MIT license. Keep the non-commercial/share-alike terms and the attribution shown in `unidic-chuko-v202512/README.md`.
 
 ```bash
-expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
-curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz
-echo "${expected_sha256}  unidic-chuko-v202512.tar.gz" | sha256sum -c -
-tar -tzf unidic-chuko-v202512.tar.gz | awk '/(^|\/)\.\.($|\/)|^\// { print "unsafe tar path: " $0 > "/dev/stderr"; bad=1 } END { exit bad }'
-tar -xzf unidic-chuko-v202512.tar.gz
-export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
+soan download-dict --output ./dictionaries
+export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
 ```
+
+The command downloads the release asset, verifies the pinned SHA-256, checks the archive paths, and extracts the dictionary.
 
 Use it with `--kobun` or `--old-japanese`:
 
@@ -67,7 +65,7 @@ Use it with `--kobun` or `--old-japanese`:
 soan \
   --text "けふ/こそ" \
   --kobun \
-  --mecab-dic ./unidic-chuko-v202512 \
+  --mecab-dic ./dictionaries/unidic-chuko-v202512 \
   --seed 5 \
   --output ./kobun.jpg \
   --metadata-output ./kobun.json \
@@ -91,7 +89,7 @@ soan \
 
 ## Metadata
 
-The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v1.0.1. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
+The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v1.1.0. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
 
 `--seed` fixes glyph/layout selection. For byte-identical JPEGs, also pass `--generated-at <ISO timestamp>` so the XMP metadata timestamp is stable.
 
@@ -126,7 +124,7 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 ## Scope Notes
 
-- PixiJS interactive editing is outside the v1.0.1 CLI package.
+- PixiJS interactive editing is outside the v1.1.0 CLI package.
 - Pro glyph directives set the effective `renmenPriority` to `0` for that render so position-based single-glyph controls stay unambiguous.
 - `［ID］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
 

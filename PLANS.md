@@ -18,7 +18,7 @@ Professional版の全量移植は本計画上43日規模のため、最初の縦
 - `pixi run build`: TypeScript build passed
 - `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成
 
-## 2026-06-29 v1.0.1 CLI公開候補メモ
+## 2026-06-29 v1.1.0 CLI公開候補メモ
 
 oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pro 記法が metadata 記録のみでレンダリングに効かないこと、実選択 glyph ID が metadata にないこと、package が private / pre-release のままであること、`any` 型が残ることだと指摘された。
 
@@ -26,13 +26,14 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `package/soan/soan.min.js` の互換レイヤーへ Pro option を通し、`［字母］` は候補 jibo filter、`［ID］` は URL ID 直接選択としてレンダリングへ反映
 - `/` 境界は kuromoji 後の bunsetsu 配列を手動分割し、`かな` と `か/な` で連綿選択が変わることを smoke で確認
 - `selectedGlyphs` metadata を追加し、選択 glyph URL・位置・jibo・URLから抽出できる glyph ID を記録
-- `soan-professional-cli@1.0.1` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
+- `soan-professional-cli@1.1.0` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
 - `--version`, 安定した `--help`, kebab-case aliases, `--margin`, `--font-family`, 数値 range validation を追加
 - v1.2 CLI 組版オプションとして `--num-lines`, `--char-spacing`, `--line-spacing` を追加。`--num-lines` はレンダリング後の softLine 数を検証し、正確に満たせない場合は出力前に失敗する
 - JPEG 出力へ Professional metadata JSON を APP1 XMP として埋め込み。PNG は sidecar JSON を正式記録とし、`xmp.embedded: false` と理由を記録
 - JPEG XMP は APP1 上限を超える場合に compact XMP を試し、それでも超える場合は JPEG と sidecar を出力しつつ `xmp.embedded: false` と理由を記録する fallback を追加
 - root `pixi run check` を test/build/smoke の release gate に更新し、package-level `npm run check` と `prepack` も追加
 - `--old-japanese` / `--kobun` を古文表記保持モードとして追加。kuromoji の読み変換を避け、原文表記と `/` 手動境界を使って既存 renderer に渡す
+- `soan download-dict --output <dir>` を追加。GitHub Release asset を取得し、固定 SHA-256 と tar path safety を検証してから中古和文 UniDic を展開する
 - `［ID］` はロード済み dataset の `data` 全体からも逆引きし、本文に同じ文字が出ていない ID でも選択できるようにした
 - `soan-cli/src`, `soan-cli/test`, `package/soan/soan.d.ts` から明示的な `any` 型を除去
 
@@ -42,6 +43,7 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成し、`15338` ID 指示が選択 glyph に反映
 - `node dist/cli.js --text 'か［加］/な' ...`: jibo `加` と slash 境界の反映を metadata で確認
 - `node dist/cli.js --text 'かな'` と `node dist/cli.js --text 'か/な'`: 境界なしは `かな` 連綿、境界ありは `か` / `な` 単字に分割されることを確認
+- `node dist/cli.js download-dict --output <tmp>`: release asset の download、SHA-256 検証、展開、既存辞書の `--force` なし拒否を確認
 - `npm --prefix soan-cli audit --omit=dev`: production dependency vulnerabilities 0
 - `npm --cache ./tmp/npm-cache pack --dry-run`: tarball contents and bundled `soan` dependency checked
 - packed tarball を `/private/tmp/soan-pack-test.*` へ install し、`npx soan --version` と `npx soan --text 'か［加］/な' ...` が成功、metadata の先頭 glyph が jibo `加` になることを確認

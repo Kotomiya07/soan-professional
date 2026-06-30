@@ -32,19 +32,6 @@ jobs:
       - name: Install npm dependencies
         run: npm --prefix soan-cli ci
 
-      - name: Download Chuko-Wabun UniDic
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
-          gh release download dict-chuko-v202512 --repo "$GITHUB_REPOSITORY" --pattern 'unidic-chuko-v202512.tar.gz'
-          echo "${expected_sha256}  unidic-chuko-v202512.tar.gz" | sha256sum -c -
-          tar -tzf unidic-chuko-v202512.tar.gz | awk '/(^|\/)\.\.($|\/)|^\// { print "unsafe tar path: " $0 > "/dev/stderr"; bad=1 } END { exit bad }'
-          mkdir -p dictionaries
-          tar -C dictionaries -xzf unidic-chuko-v202512.tar.gz
-
       - name: Build core contracts
         run: npm --prefix soan-cli exec tsc -- -p packages/core/tsconfig.json
 
@@ -62,6 +49,9 @@ jobs:
 
       - name: Build CLI
         run: npm --prefix soan-cli run build
+
+      - name: Download Chuko-Wabun UniDic
+        run: node soan-cli/dist/cli.js download-dict --output dictionaries
 
       - name: Run CLI e2e
         env:
@@ -88,11 +78,12 @@ jobs:
           set -euo pipefail
           packfile="$(cd soan-cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
           tmpdir="$(mktemp -d)"
+          version="$(node -p "require('./soan-cli/package.json').version")"
           npm --prefix "$tmpdir" install -g "$RUNNER_TEMP/$packfile"
           PATH="$tmpdir/bin:$PATH"
-          soan --version | grep '^1\.0\.1$'
-          soan-cli --version | grep '^1\.0\.1$'
-          soan-pro --version | grep '^1\.0\.1$'
+          soan --version | grep "^${version}$"
+          soan-cli --version | grep "^${version}$"
+          soan-pro --version | grep "^${version}$"
           soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
           soan --text 'けふ/こそ' --kobun --mecab-dic "${{ github.workspace }}/dictionaries/unidic-chuko-v202512" --seed 3 --generated-at 2026-06-29T00:00:00.000Z --page-width 640 --page-height 960 --manual-positions '[{"position":0,"offsetX":14,"offsetY":-6}]' --output "$tmpdir/kobun.jpg" --metadata-output "$tmpdir/kobun.json" --force
           node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const k=JSON.parse(fs.readFileSync(process.argv[2],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1); if(k.soanConfig.morphologyEngine!=='mecab-unidic-chuko') process.exit(2); if(k.soanConfig.pageWidth!==640 || k.manualPositions[0].offsetX!==14) process.exit(3);" "$tmpdir/jibo.json" "$tmpdir/kobun.json"

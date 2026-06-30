@@ -4,13 +4,14 @@ import type { CliOptions, DatasetConfig, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
 import { defaultChukoDictionaryPath } from './mecab.js';
 
-export const CLI_VERSION = '1.0.1';
+export const CLI_VERSION = '1.1.0';
 
 function printHelp(): void {
   console.log(`soan-professional-cli ${CLI_VERSION}
 
 Usage:
   soan --text <text> --output <file> [options]
+  soan download-dict [--output <dir>] [--force]
 
 Core options:
   -t, --text <text>                 Text to render. Supports Pro notation: ［字母］, ［ID］, /
@@ -51,7 +52,12 @@ Core options:
       --version                     Print version.
       --help                        Print this help.
 
-Unsupported in v1.0.1 CLI package:
+Dictionary command:
+  download-dict                     Download and extract Chuko-Wabun UniDic.
+      --output <dir>                Parent directory. Default: ./dictionaries
+      --force                       Replace an existing unidic-chuko-v202512 directory.
+
+Unsupported in v1.1.0 CLI package:
   PixiJS interactive editing.
 `);
 }

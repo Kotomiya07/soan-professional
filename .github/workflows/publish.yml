@@ -35,21 +35,11 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y mecab
 
-      - name: Download Chuko-Wabun UniDic
-        shell: bash
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
-          gh release download dict-chuko-v202512 --repo "$GITHUB_REPOSITORY" --pattern 'unidic-chuko-v202512.tar.gz'
-          echo "${expected_sha256}  unidic-chuko-v202512.tar.gz" | sha256sum -c -
-          tar -tzf unidic-chuko-v202512.tar.gz | awk '/(^|\/)\.\.($|\/)|^\// { print "unsafe tar path: " $0 > "/dev/stderr"; bad=1 } END { exit bad }'
-          mkdir -p dictionaries
-          tar -C dictionaries -xzf unidic-chuko-v202512.tar.gz
-
       - name: Build package
         run: npm --prefix soan-cli run build
+
+      - name: Download Chuko-Wabun UniDic
+        run: node soan-cli/dist/cli.js download-dict --output dictionaries
 
       - name: Check formatting
         run: npm --prefix soan-cli run format:check

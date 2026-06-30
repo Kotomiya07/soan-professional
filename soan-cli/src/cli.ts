@@ -4,6 +4,7 @@ import { writeMetadata } from './metadata.js';
 import { readCliOptions } from './options.js';
 import { assertOutputWritable, ensureParentDirectory, writeImageBuffer } from './output.js';
 import { generateImage, soanConfigFromOptions } from './render.js';
+import { downloadChukoDictionary } from './dictionary.js';
 import type {
   CliOptions,
   GenerationMetadata,
@@ -12,6 +13,20 @@ import type {
 } from './types.js';
 import { tryInjectXmpMetadata } from './xmp.js';
 import { analyzeWithMecab } from './mecab.js';
+import { parseArgs } from 'node:util';
+
+function printDownloadDictionaryHelp(): void {
+  console.log(`soan download-dict
+
+Usage:
+  soan download-dict [--output <dir>] [--force]
+
+Options:
+  -o, --output <dir>  Parent directory. Default: ./dictionaries
+      --force         Replace an existing unidic-chuko-v202512 directory.
+      --help          Print this help.
+`);
+}
 
 function glyphIdFromUrl(url: string): number | undefined {
   const fallbackMatch = url.match(/(?:^|\/)(\d+)-/);
@@ -71,6 +86,30 @@ function optionsWithNumLinesApplied(options: CliOptions, renderText: string): Cl
 }
 
 async function main(): Promise<void> {
+  if (process.argv[2] === 'download-dict' || process.argv[2] === 'download-dictionary') {
+    if (process.argv.includes('--help') || process.argv.includes('-h')) {
+      printDownloadDictionaryHelp();
+      return;
+    }
+
+    const { values } = parseArgs({
+      args: process.argv.slice(3),
+      options: {
+        output: { type: 'string', short: 'o', default: 'dictionaries' },
+        force: { type: 'boolean', default: false },
+      },
+      allowPositionals: false,
+    });
+    const result = await downloadChukoDictionary({
+      outputDirectory: values.output,
+      force: values.force,
+    });
+    console.log(`Downloaded Chuko-Wabun UniDic: ${result.dictionaryPath}`);
+    console.log(`SHA-256: ${result.sha256}`);
+    console.log(`Use with: soan --kobun --mecab-dic "${result.dictionaryPath}" --text <text>`);
+    return;
+  }
+
   if (
     process.argv.includes('--version') ||
     process.argv.includes('--help') ||
