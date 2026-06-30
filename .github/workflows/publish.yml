@@ -143,7 +143,15 @@ jobs:
           set -euo pipefail
           version="$(node -p "require('./soan-cli/package.json').version")"
           tmpdir="$(mktemp -d)"
-          npm --prefix "$tmpdir" install -g "soan-professional-cli@${version}"
+          for attempt in 1 2 3 4 5; do
+            if npm --prefix "$tmpdir" install -g "soan-professional-cli@${version}"; then
+              break
+            fi
+            if [ "$attempt" -eq 5 ]; then
+              exit 1
+            fi
+            sleep 15
+          done
           PATH="$tmpdir/bin:$PATH"
           soan --version | grep "^${version}$"
           soan-cli --version | grep "^${version}$"
