@@ -14,7 +14,7 @@ function metadataFixture(): GenerationMetadata {
     boundaries: [],
     xmp: { embedded: true },
     soanConfig: {
-      datasets: [{ url: 'http://codh.rois.ac.jp/soan/dataset/001.json' }],
+      datasets: [{ url: 'https://codh.rois.ac.jp/soan/dataset/001.json' }],
       allowUnavailableChar: false,
       renmenPriority: 1,
       charsPerLine: 20,

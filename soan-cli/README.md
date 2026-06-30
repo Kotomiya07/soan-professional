@@ -79,12 +79,13 @@ When a Pro glyph directive is present, the compatibility renderer sets the effec
 
 `--old-japanese` / `--kobun` uses MeCab with Chuko-Wabun UniDic when `mecab` is available and the dictionary is provided by `--mecab-dic` or `SOAN_MECAB_DIC`. The repository-local development dictionary lives at `dictionaries/unidic-chuko-v202512` and is intentionally not bundled into the npm tarball.
 
-Download the dictionary from the separate GitHub Release asset:
+Download the dictionary from the separate GitHub Release asset. Chuko-Wabun UniDic is distributed under CC BY-NC-SA 4.0, separately from this CLI package's MIT license. Keep the non-commercial/share-alike terms and attribution shown in `unidic-chuko-v202512/README.md`.
 
 ```bash
+expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
 curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz
-curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz.sha256
-sha256sum -c unidic-chuko-v202512.tar.gz.sha256
+echo "${expected_sha256}  unidic-chuko-v202512.tar.gz" | sha256sum -c -
+tar -tzf unidic-chuko-v202512.tar.gz | awk '/(^|\/)\.\.($|\/)|^\// { print "unsafe tar path: " $0 > "/dev/stderr"; bad=1 } END { exit bad }'
 tar -xzf unidic-chuko-v202512.tar.gz
 export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
 ```

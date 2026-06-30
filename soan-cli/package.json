@@ -3,7 +3,9 @@
   "version": "2.0.0",
   "description": "Professional CLI for Soan image generation",
   "author": "Center for Open Data in the Humanities, Research Organization of Information and Systems",
-  "contributors": [ "Jun HOMMA (https://www.flxstyle.com/)" ],
+  "contributors": [
+    "Jun HOMMA (https://www.flxstyle.com/)"
+  ],
   "license": "MIT",
   "engines": {
     "node": ">=20"
@@ -15,8 +17,8 @@
     "test": "vitest run",
     "smoke": "node dist/cli.js --text \"か［加］/な\" --seed 42 --gamma 1.1 --generated-at 2026-06-29T00:00:00.000Z --output ./tmp/smoke.jpg --metadata-output ./tmp/smoke.json --force",
     "test:e2e": "node test/cli-e2e.mjs",
-    "check:mecab": "nix shell nixpkgs#mecab -c npm run test:e2e",
-    "check": "npm run test && npm run build && npm run check:mecab && npm run smoke",
+    "check:mecab:nix": "nix shell nixpkgs#mecab -c npm run test:e2e",
+    "check": "npm run test && npm run build && npm run check:mecab:nix && npm run smoke",
     "prepack": "npm run build"
   },
   "dependencies": {
@@ -30,7 +32,7 @@
   "devDependencies": {
     "@types/node": "^22.10.2",
     "typescript": "^5.7.2",
-    "vitest": "^2.1.8"
+    "vitest": "^4.1.9"
   },
   "bin": {
     "soan": "dist/cli.js",
@@ -50,11 +52,11 @@
     "typography",
     "japanese"
   ],
-  "bundledDependencies": [
-    "soan"
-  ],
   "type": "module",
   "publishConfig": {
     "access": "public"
-  }
+  },
+  "bundleDependencies": [
+    "soan"
+  ]
 }

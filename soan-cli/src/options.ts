@@ -64,7 +64,7 @@ const argsConfig = {
     metadataOutput: { type: 'string', description: '再現性メタデータJSONの出力先' },
     'metadata-output': { type: 'string', description: '再現性メタデータJSONの出力先（metadataOutputの別名）' },
     force: { type: 'boolean', default: false, description: '出力先に同名ファイルがあるときも上書きする' },
-    datasets: { type: 'string', multiple: true, default: ['{"url":"http://codh.rois.ac.jp/soan/dataset/001.json"}'] as string[], description: '利用する古活字データセット情報の配列' },
+    datasets: { type: 'string', multiple: true, default: ['{"url":"https://codh.rois.ac.jp/soan/dataset/001.json"}'] as string[], description: '利用する古活字データセット情報の配列' },
     allowUnavailableChar: { type: 'boolean', default: false, description: '古活字画像が登録されていない文字も許容する' },
     'allow-unavailable-char': { type: 'boolean', description: '古活字画像が登録されていない文字も許容する（allowUnavailableCharの別名）' },
     renmenPriority: { type: 'string', default: '1', description: '連綿活字の優先度（0:非連綿優先～1:連綿優先）' },

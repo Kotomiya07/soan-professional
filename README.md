@@ -66,12 +66,13 @@ node dist/cli.js \
   --force
 ```
 
-辞書は npm package には同梱していません。GitHub Release から取得して展開し、`--mecab-dic` または `SOAN_MECAB_DIC` で指定します。
+辞書は npm package には同梱していません。GitHub Release から取得して展開し、`--mecab-dic` または `SOAN_MECAB_DIC` で指定します。中古和文 UniDic は CC BY-NC-SA 4.0 です。非営利・継承条件と、国立国語研究所「通時コーパス」プロジェクト / 小木曽智信氏への attribution は、展開後の `unidic-chuko-v202512/README.md` を参照してください。
 
 ```bash
+expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
 curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz
-curl -L -O https://github.com/Kotomiya07/soan-professional/releases/download/dict-chuko-v202512/unidic-chuko-v202512.tar.gz.sha256
-sha256sum -c unidic-chuko-v202512.tar.gz.sha256
+echo "${expected_sha256}  unidic-chuko-v202512.tar.gz" | sha256sum -c -
+tar -tzf unidic-chuko-v202512.tar.gz | awk '/(^|\/)\.\.($|\/)|^\// { print "unsafe tar path: " $0 > "/dev/stderr"; bad=1 } END { exit bad }'
 tar -xzf unidic-chuko-v202512.tar.gz
 export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
 ```
@@ -81,6 +82,7 @@ export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
 ```bash
 pixi run check
 npm --prefix soan-cli audit --omit=dev
+npm --prefix soan-cli audit
 cd soan-cli
 npm run test:e2e
 npm --cache ./tmp/npm-cache pack --dry-run
@@ -122,5 +124,5 @@ npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata
 
 - Pro glyph 指示があるレンダリングでは、位置指定を成立させるため、その実行に限って実効 `renmenPriority` を `0` にします。この値は sidecar の `soanConfig.renmenPriority` にも実効値として記録します。
 - `［ID］` は設定済み dataset と同梱 fallback 画像から解決します。未指定 dataset を探索する global registry は持ちません。
-- `dictionaries/unidic-chuko-v202512` はローカル辞書配置です。npm tarball には同梱せず、GitHub Release `dict-chuko-v202512` から別 asset として配布します。配布先では `--mecab-dic` または `SOAN_MECAB_DIC` で辞書を指定します。
+- `dictionaries/unidic-chuko-v202512` はローカル辞書配置です。npm tarball には同梱せず、GitHub Release `dict-chuko-v202512` から別 asset として配布します。配布先では `--mecab-dic` または `SOAN_MECAB_DIC` で辞書を指定します。辞書 license は CC BY-NC-SA 4.0 で、npm package 本体の MIT license とは別です。
 - PixiJS interactive editing は v2.0.0 の範囲外です。

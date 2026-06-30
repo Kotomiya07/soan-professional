@@ -1,5 +1,16 @@
-import { existsSync, mkdirSync, writeFileSync, writeSync } from 'node:fs';
+import { existsSync, lstatSync, mkdirSync, writeFileSync, writeSync } from 'node:fs';
 import { dirname } from 'node:path';
+
+export function assertNotSymlink(path: string | undefined): void {
+  if (path === undefined || path === '') {
+    return;
+  }
+
+  const stat = lstatSync(path, { throwIfNoEntry: false });
+  if (stat?.isSymbolicLink()) {
+    throw new Error(`Refusing to write through symbolic link: ${path}`);
+  }
+}
 
 export function ensureParentDirectory(path: string | undefined): void {
   if (path === undefined || path === '') {
@@ -25,6 +36,7 @@ export function assertOutputWritable(path: string | undefined, force: boolean): 
 export function writeImageBuffer(path: string | undefined, buffer: Buffer, force: boolean, format: 'jpeg' | 'png'): void {
   if (path !== undefined && path !== '') {
     ensureParentDirectory(path);
+    assertNotSymlink(path);
     writeFileSync(path, buffer, { flag: force ? 'w' : 'wx' });
     return;
   }
