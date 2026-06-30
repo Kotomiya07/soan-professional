@@ -7,74 +7,50 @@
 ![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
+[![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](./README.ja.md)
 
-Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 の公開対象は npm package `soan-professional-cli` です。`packages/core` と `packages/demo` は、このリポジトリ内で CLI を支える補助実装・検証用デモとして同梱しています。PixiJS ブラウザ編集 UI は範囲外です。
+`soan-professional-cli` generates Soan images from the command line with the reproducible controls needed by the Professional workflow. It keeps the Soan v1.1.0 compatibility renderer and adds deterministic glyph/layout selection, Pro notation, metadata sidecars, JPEG XMP, page layout controls, and optional Chuko-Wabun UniDic analysis.
 
-## 現在の公開単位
+The npm package published from this repository is `soan-professional-cli`. The repository also contains local validation/demo packages used to build and test the CLI.
 
-公開対象は `soan-cli/` の npm package `soan-professional-cli@2.0.0` だけです。インストール後は次の bin を提供します。
+## Installation
+
+After the package is published to npm:
+
+```bash
+npm install -g soan-professional-cli
+soan --version
+```
+
+From a source checkout:
+
+```bash
+pixi run install
+pixi run build
+```
+
+## Quick Start
+
+```bash
+soan \
+  --text "か［加］/な" \
+  --seed 42 \
+  --generated-at 2026-06-29T00:00:00.000Z \
+  --gamma 1.1 \
+  --output ./sample.jpg \
+  --metadata-output ./sample.json \
+  --force
+```
+
+The package provides three equivalent command names:
 
 - `soan`
 - `soan-cli`
 - `soan-pro`
 
-## 実装済み CLI 機能
+## Chuko-Wabun UniDic
 
-- Pro 記法 `［字母］` / `［ID］` の実レンダリング反映
-- `/` による手動 bunsetsu / renmen 境界
-- `--seed` による glyph / layout 選択の再現性
-- `--generated-at` による metadata timestamp 固定と XMP 込み JPEG の byte-level 再現性
-- `--gamma` による出力画像のガンマ補正
-- `--num-lines`, `--char-spacing`, `--line-spacing` による v1.2 CLI 組版制御
-- `--old-japanese` / `--kobun` による MeCab / 中古和文 UniDic 解析
-- `--page-width`, `--page-height` による page layout
-- `--manual-positions` による glyph 手動位置調整
-- `--metadata-output` による canonical sidecar JSON
-- JPEG APP1 XMP への Professional metadata 埋め込み
-- PNG 出力
-- 設定済み dataset 全体からの `［ID］` 逆引き
-
-## セットアップ
-
-このリポジトリでは `pixi` task から npm を呼び出します。
-
-```bash
-pixi run install
-pixi run check
-```
-
-`pixi run check` は core build, unit test, CLI build, MeCab 込み CLI e2e, smoke を実行します。
-
-## 基本コマンド
-
-```bash
-pixi run build
-cd soan-cli
-node dist/cli.js \
-  --text "か［加］/な" \
-  --seed 42 \
-  --generated-at 2026-06-29T00:00:00.000Z \
-  --gamma 1.1 \
-  --output ./tmp/sample.jpg \
-  --metadata-output ./tmp/sample.json \
-  --force
-```
-
-中古和文 UniDic 解析モード:
-
-```bash
-cd soan-cli
-node dist/cli.js \
-  --text "けふ/こそ" \
-  --kobun \
-  --mecab-dic ../dictionaries/unidic-chuko-v202512 \
-  --seed 5 \
-  --output ./tmp/kobun.jpg \
-  --metadata-output ./tmp/kobun.json \
-  --force
-```
-
-辞書は npm package には同梱していません。GitHub Release から取得して展開し、`--mecab-dic` または `SOAN_MECAB_DIC` で指定します。中古和文 UniDic は CC BY-NC-SA 4.0 です。非営利・継承条件と、国立国語研究所「通時コーパス」プロジェクト / 小木曽智信氏への attribution は、展開後の `unidic-chuko-v202512/README.md` を参照してください。
+The dictionary is distributed as a separate GitHub Release asset and is not bundled into the npm package. Chuko-Wabun UniDic is licensed under CC BY-NC-SA 4.0, separately from this CLI package's MIT license. Keep the non-commercial/share-alike terms and the attribution shown in `unidic-chuko-v202512/README.md`.
 
 ```bash
 expected_sha256="5e548c834dd043e7909c46cc20f56a9f1d80dc7ea103361bf0b4a541f77610e9"
@@ -85,52 +61,73 @@ tar -xzf unidic-chuko-v202512.tar.gz
 export SOAN_MECAB_DIC="$PWD/unidic-chuko-v202512"
 ```
 
-## 公開前ゲート
+Use it with `--kobun` or `--old-japanese`:
+
+```bash
+soan \
+  --text "けふ/こそ" \
+  --kobun \
+  --mecab-dic ./unidic-chuko-v202512 \
+  --seed 5 \
+  --output ./kobun.jpg \
+  --metadata-output ./kobun.json \
+  --force
+```
+
+## Features
+
+- Pro notation with `［字母］` and `［ID］` directives
+- Manual bunsetsu / renmen boundaries with `/`
+- Reproducible glyph and layout selection with `--seed`
+- Byte-level reproducible JPEG output when `--generated-at` is fixed
+- Gamma correction with `--gamma`
+- Layout controls: `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, and `--page-height`
+- Manual glyph offsets with `--manual-positions`
+- Chuko-Wabun UniDic analysis with `--old-japanese` / `--kobun`
+- Canonical sidecar metadata with `--metadata-output`
+- Professional metadata embedded as JPEG APP1 XMP when it fits
+- PNG output
+- Glyph lookup by `［ID］` from the configured datasets and bundled fallback images
+
+## Metadata
+
+The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v2.0.0. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
+
+`--seed` fixes glyph/layout selection. For byte-identical JPEGs, also pass `--generated-at <ISO timestamp>` so the XMP metadata timestamp is stable.
+
+## Development
+
+Run the local verification suite from the repository root:
 
 ```bash
 pixi run check
-npm --prefix soan-cli audit --omit=dev
 npm --prefix soan-cli audit
-cd soan-cli
-npm run test:e2e
-npm --cache ./tmp/npm-cache pack --dry-run
-npm --cache ./tmp/npm-cache publish --dry-run
 ```
 
-tarball install smoke も確認済みです。
+Useful release checks:
 
 ```bash
 cd soan-cli
-npm --cache ./tmp/npm-cache pack
-tmpdir=$(mktemp -d /private/tmp/soan-pack-final.XXXXXX)
-cd "$tmpdir"
-npm --cache /Users/ryo/soan/soan-cli/tmp/npm-cache init -y
-npm --cache /Users/ryo/soan/soan-cli/tmp/npm-cache install /Users/ryo/soan/soan-cli/soan-professional-cli-2.0.0.tgz
-npx soan --version
-npx soan --text 'か［1］' --seed 3 --output ./id.jpg --metadata-output ./id.json --force
-npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata-output ./kobun.json --force
+npm run test:e2e
+npm pack --dry-run
+npm publish --access public --dry-run
 ```
 
-## ディレクトリ
+## Repository Layout
 
-- `soan-cli/`: npm package 本体
-- `packages/core/`: repo内の renderer-independent core contracts。現時点では単独公開対象ではありません
-- `packages/demo/`: PixiJSを使わない静的CLI demo。現時点では単独公開対象ではありません
-- `soan-cli/src/`: TypeScript CLI 実装
-- `soan-cli/test/`: Vitest unit tests
-- `package/`: Soan v1.1.0 互換 dependency
-- `package/soan/soan.min.js`: Professional CLI 用に最小パッチした互換 renderer
-- `PLANS.md`: 移植計画、実装履歴、検証履歴
+- `soan-cli/`: npm package source
+- `packages/core/`: renderer-independent contracts used by repository validation
+- `packages/demo/`: static non-Pixi CLI demo
+- `package/`: bundled Soan v1.1.0 compatibility dependency
+- `dictionaries/`: local development dictionary location, not included in the npm tarball
+- `PLANS.md`: migration plan and validation notes
 
-## メタデータ契約
+## Scope Notes
 
-`--metadata-output` の sidecar JSON が v2.0.0 の canonical reproducibility record です。JPEG には同じ Professional metadata JSON を単一の APP1 XMP packet として埋め込みます。XMP が JPEG APP1 のサイズ上限を超える場合は compact XMP を試し、それでも大きい場合は JPEG と sidecar を出力したうえで `xmp.embedded: false` と理由を記録します。PNG は sidecar JSON のみを正式記録とします。
+- PixiJS interactive editing is outside the v2.0.0 CLI package.
+- Pro glyph directives set the effective `renmenPriority` to `0` for that render so position-based single-glyph controls stay unambiguous.
+- `［ID］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
 
-`--seed` は glyph / layout 選択を再現するための値です。JPEG bytes まで固定したい場合は、XMP に入る timestamp も変化しないように `--generated-at <ISO timestamp>` を指定してください。
+## License
 
-## 制限
-
-- Pro glyph 指示があるレンダリングでは、位置指定を成立させるため、その実行に限って実効 `renmenPriority` を `0` にします。この値は sidecar の `soanConfig.renmenPriority` にも実効値として記録します。
-- `［ID］` は設定済み dataset と同梱 fallback 画像から解決します。未指定 dataset を探索する global registry は持ちません。
-- `dictionaries/unidic-chuko-v202512` はローカル辞書配置です。npm tarball には同梱せず、GitHub Release `dict-chuko-v202512` から別 asset として配布します。配布先では `--mecab-dic` または `SOAN_MECAB_DIC` で辞書を指定します。辞書 license は CC BY-NC-SA 4.0 で、npm package 本体の MIT license とは別です。
-- PixiJS interactive editing は v2.0.0 の範囲外です。
+The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.
