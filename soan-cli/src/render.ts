@@ -2,7 +2,14 @@ import { createRequire } from 'node:module';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { applyGammaToRgba } from './gamma.js';
 import { withSeededMathRandom } from './prng.js';
-import type { CanvasLike, CliOptions, GenerationMetadata, SoanFactory, SoanInstance, SoanRenderOptions } from './types.js';
+import type {
+  CanvasLike,
+  CliOptions,
+  GenerationMetadata,
+  SoanFactory,
+  SoanInstance,
+  SoanRenderOptions,
+} from './types.js';
 
 const require = createRequire(import.meta.url);
 const createSoan = require('soan') as SoanFactory;
@@ -43,7 +50,12 @@ function encodeCanvas(canvas: CanvasLike, format: 'jpeg' | 'png', quality: numbe
   return canvas.toBuffer('image/jpeg', { quality });
 }
 
-async function applyGammaToBuffer(buffer: Buffer, format: 'jpeg' | 'png', quality: number, gamma: number): Promise<Buffer> {
+async function applyGammaToBuffer(
+  buffer: Buffer,
+  format: 'jpeg' | 'png',
+  quality: number,
+  gamma: number,
+): Promise<Buffer> {
   if (gamma === 1) {
     return buffer;
   }
@@ -83,7 +95,11 @@ export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): Soa
   };
 }
 
-async function renderWithSoan(soan: SoanInstance, metadata: GenerationMetadata, seed: number | undefined) {
+async function renderWithSoan(
+  soan: SoanInstance,
+  metadata: GenerationMetadata,
+  seed: number | undefined,
+) {
   return withSeededMathRandom(seed, () =>
     soan.getTextImageFromTextPromise(metadata.renderText, soanRenderOptionsFromMetadata(metadata)),
   );
@@ -93,7 +109,10 @@ function createSoanQuietly(options: CliOptions): SoanInstance | undefined {
   const originalLog = console.log;
   console.log = (...args: readonly unknown[]) => {
     const [first] = args;
-    if (typeof first === 'string' && first.startsWith('Soan: Library for rendering modern Japanese')) {
+    if (
+      typeof first === 'string' &&
+      first.startsWith('Soan: Library for rendering modern Japanese')
+    ) {
       return;
     }
     originalLog(...args);
@@ -111,7 +130,10 @@ export interface GeneratedImage {
   readonly image: GenerationMetadata['image'];
 }
 
-export async function generateImage(options: CliOptions, metadata: GenerationMetadata): Promise<GeneratedImage> {
+export async function generateImage(
+  options: CliOptions,
+  metadata: GenerationMetadata,
+): Promise<GeneratedImage> {
   const soan = createSoanQuietly(options);
   if (soan === undefined) {
     throw new Error('Failed to initialize Soan');

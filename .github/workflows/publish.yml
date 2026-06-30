@@ -50,6 +50,15 @@ jobs:
       - name: Build package
         run: npm --prefix soan-cli run build
 
+      - name: Check formatting
+        run: npm --prefix soan-cli run format:check
+
+      - name: Run linter
+        run: npm --prefix soan-cli run lint
+
+      - name: Run typecheck
+        run: npm --prefix soan-cli run typecheck
+
       - name: Run unit tests
         run: npm --prefix soan-cli test
 

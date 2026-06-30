@@ -4,7 +4,12 @@ import { writeMetadata } from './metadata.js';
 import { readCliOptions } from './options.js';
 import { assertOutputWritable, ensureParentDirectory, writeImageBuffer } from './output.js';
 import { generateImage, soanConfigFromOptions } from './render.js';
-import type { CliOptions, GenerationMetadata, SelectedGlyphMetadata, SoanRenderedGlyph } from './types.js';
+import type {
+  CliOptions,
+  GenerationMetadata,
+  SelectedGlyphMetadata,
+  SoanRenderedGlyph,
+} from './types.js';
 import { tryInjectXmpMetadata } from './xmp.js';
 import { analyzeWithMecab } from './mecab.js';
 
@@ -18,7 +23,9 @@ function glyphIdFromUrl(url: string): number | undefined {
   return codhMatch === null ? undefined : Number.parseInt(codhMatch[1], 10);
 }
 
-function selectedGlyphsFromRenderedGlyphs(renderedGlyphs: readonly SoanRenderedGlyph[]): readonly SelectedGlyphMetadata[] {
+function selectedGlyphsFromRenderedGlyphs(
+  renderedGlyphs: readonly SoanRenderedGlyph[],
+): readonly SelectedGlyphMetadata[] {
   let position = 0;
   return renderedGlyphs.map((glyph) => {
     const selectedGlyph = {
@@ -31,7 +38,10 @@ function selectedGlyphsFromRenderedGlyphs(renderedGlyphs: readonly SoanRenderedG
   });
 }
 
-function assertNumLinesSatisfied(options: CliOptions, selectedGlyphs: readonly SelectedGlyphMetadata[]): void {
+function assertNumLinesSatisfied(
+  options: CliOptions,
+  selectedGlyphs: readonly SelectedGlyphMetadata[],
+): void {
   if (options.numLines === undefined) {
     return;
   }
@@ -61,7 +71,11 @@ function optionsWithNumLinesApplied(options: CliOptions, renderText: string): Cl
 }
 
 async function main(): Promise<void> {
-  if (process.argv.includes('--version') || process.argv.includes('--help') || process.argv.includes('-h')) {
+  if (
+    process.argv.includes('--version') ||
+    process.argv.includes('--help') ||
+    process.argv.includes('-h')
+  ) {
     readCliOptions();
     return;
   }

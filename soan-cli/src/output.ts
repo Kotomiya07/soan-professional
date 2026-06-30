@@ -33,7 +33,12 @@ export function assertOutputWritable(path: string | undefined, force: boolean): 
   }
 }
 
-export function writeImageBuffer(path: string | undefined, buffer: Buffer, force: boolean, format: 'jpeg' | 'png'): void {
+export function writeImageBuffer(
+  path: string | undefined,
+  buffer: Buffer,
+  force: boolean,
+  format: 'jpeg' | 'png',
+): void {
   if (path !== undefined && path !== '') {
     ensureParentDirectory(path);
     assertNotSymlink(path);

@@ -59,17 +59,48 @@ Unsupported in v2.0.0 CLI package:
 const argsConfig = {
   description: 'Professional CLI for Soan image generation',
   options: {
-    text: { type: 'string', short: 't', description: '（必須）古活字組版画像化する文字列。Pro記法 ［字母］/［ID］ と / 境界を利用可' },
+    text: {
+      type: 'string',
+      short: 't',
+      description: '（必須）古活字組版画像化する文字列。Pro記法 ［字母］/［ID］ と / 境界を利用可',
+    },
     output: { type: 'string', short: 'o', description: '出力先ファイル名（未指定時はstdout）' },
     metadataOutput: { type: 'string', description: '再現性メタデータJSONの出力先' },
-    'metadata-output': { type: 'string', description: '再現性メタデータJSONの出力先（metadataOutputの別名）' },
-    force: { type: 'boolean', default: false, description: '出力先に同名ファイルがあるときも上書きする' },
-    datasets: { type: 'string', multiple: true, default: ['{"url":"https://codh.rois.ac.jp/soan/dataset/001.json"}'] as string[], description: '利用する古活字データセット情報の配列' },
-    allowUnavailableChar: { type: 'boolean', default: false, description: '古活字画像が登録されていない文字も許容する' },
-    'allow-unavailable-char': { type: 'boolean', description: '古活字画像が登録されていない文字も許容する（allowUnavailableCharの別名）' },
-    renmenPriority: { type: 'string', default: '1', description: '連綿活字の優先度（0:非連綿優先～1:連綿優先）' },
+    'metadata-output': {
+      type: 'string',
+      description: '再現性メタデータJSONの出力先（metadataOutputの別名）',
+    },
+    force: {
+      type: 'boolean',
+      default: false,
+      description: '出力先に同名ファイルがあるときも上書きする',
+    },
+    datasets: {
+      type: 'string',
+      multiple: true,
+      default: ['{"url":"https://codh.rois.ac.jp/soan/dataset/001.json"}'] as string[],
+      description: '利用する古活字データセット情報の配列',
+    },
+    allowUnavailableChar: {
+      type: 'boolean',
+      default: false,
+      description: '古活字画像が登録されていない文字も許容する',
+    },
+    'allow-unavailable-char': {
+      type: 'boolean',
+      description: '古活字画像が登録されていない文字も許容する（allowUnavailableCharの別名）',
+    },
+    renmenPriority: {
+      type: 'string',
+      default: '1',
+      description: '連綿活字の優先度（0:非連綿優先～1:連綿優先）',
+    },
     'renmen-priority': { type: 'string', description: '連綿活字の優先度（renmenPriorityの別名）' },
-    charsPerLine: { type: 'string', default: '20', description: '字詰数（0:自動的に行を折り返さない）' },
+    charsPerLine: {
+      type: 'string',
+      default: '20',
+      description: '字詰数（0:自動的に行を折り返さない）',
+    },
     'chars-per-line': { type: 'string', description: '字詰数（charsPerLineの別名）' },
     lineGap: { type: 'string', default: '0.5', description: '行間' },
     'line-gap': { type: 'string', description: '行間（lineGapの別名）' },
@@ -79,7 +110,11 @@ const argsConfig = {
     'char-spacing': { type: 'string', description: '字間微調整（charSpacingの別名）' },
     lineSpacing: { type: 'string', default: '0', description: '行間微調整（1/100文字単位）' },
     'line-spacing': { type: 'string', description: '行間微調整（lineSpacingの別名）' },
-    oldJapanese: { type: 'boolean', default: false, description: '古文表記保持モード。kuromojiの読み変換を避け、原文表記を使う' },
+    oldJapanese: {
+      type: 'boolean',
+      default: false,
+      description: '古文表記保持モード。kuromojiの読み変換を避け、原文表記を使う',
+    },
     'old-japanese': { type: 'boolean', description: '古文表記保持モード（oldJapaneseの別名）' },
     kobun: { type: 'boolean', description: '古文表記保持モード（oldJapaneseの別名）' },
     margin: { type: 'string', description: '天地左右の余白（px）。個別指定がない箇所へ適用' },
@@ -91,29 +126,69 @@ const argsConfig = {
     'margin-left': { type: 'string', description: '左の余白（marginLeftの別名）' },
     marginRight: { type: 'string', default: '100', description: '右の余白（px）' },
     'margin-right': { type: 'string', description: '右の余白（marginRightの別名）' },
-    height: { type: 'string', default: 'auto', choices: ['auto', 'fit'], description: '出力画像の縦幅' },
+    height: {
+      type: 'string',
+      default: 'auto',
+      choices: ['auto', 'fit'],
+      description: '出力画像の縦幅',
+    },
     pageWidth: { type: 'string', description: 'Professional page layout width in pixels' },
-    'page-width': { type: 'string', description: 'Professional page layout width in pixels（pageWidthの別名）' },
+    'page-width': {
+      type: 'string',
+      description: 'Professional page layout width in pixels（pageWidthの別名）',
+    },
     pageHeight: { type: 'string', description: 'Professional page layout height in pixels' },
-    'page-height': { type: 'string', description: 'Professional page layout height in pixels（pageHeightの別名）' },
-    manualPositions: { type: 'string', description: 'Manual glyph offsets JSON: [{"position":0,"offsetX":10,"offsetY":-5}]' },
-    'manual-positions': { type: 'string', description: 'Manual glyph offsets JSON（manualPositionsの別名）' },
-    mecabDic: { type: 'string', description: '中古和文UniDic directory for --old-japanese / --kobun' },
+    'page-height': {
+      type: 'string',
+      description: 'Professional page layout height in pixels（pageHeightの別名）',
+    },
+    manualPositions: {
+      type: 'string',
+      description: 'Manual glyph offsets JSON: [{"position":0,"offsetX":10,"offsetY":-5}]',
+    },
+    'manual-positions': {
+      type: 'string',
+      description: 'Manual glyph offsets JSON（manualPositionsの別名）',
+    },
+    mecabDic: {
+      type: 'string',
+      description: '中古和文UniDic directory for --old-japanese / --kobun',
+    },
     'mecab-dic': { type: 'string', description: '中古和文UniDic directory（mecabDicの別名）' },
     mecabCommand: { type: 'string', default: 'mecab', description: 'MeCab executable path' },
     'mecab-command': { type: 'string', description: 'MeCab executable path（mecabCommandの別名）' },
     fontFamily: { type: 'string', default: 'serif', description: '未登録文字のフォントファミリー' },
-    'font-family': { type: 'string', description: '未登録文字のフォントファミリー（fontFamilyの別名）' },
+    'font-family': {
+      type: 'string',
+      description: '未登録文字のフォントファミリー（fontFamilyの別名）',
+    },
     fontColor: { type: 'string', default: '#000000', description: '未登録文字のフォント色' },
     'font-color': { type: 'string', description: '未登録文字のフォント色（fontColorの別名）' },
     scale: { type: 'string', default: '1', description: '画像作成サイズ倍率' },
     paperTexture: { type: 'string', default: '', description: '用紙テクスチャファイル名' },
-    'paper-texture': { type: 'string', description: '用紙テクスチャファイル名（paperTextureの別名）' },
-    white: { type: 'string', default: '#ffffff', description: '古活字データセット画像の白にマッピングする描画色' },
-    black: { type: 'string', default: '#000000', description: '古活字データセット画像の黒にマッピングする描画色' },
+    'paper-texture': {
+      type: 'string',
+      description: '用紙テクスチャファイル名（paperTextureの別名）',
+    },
+    white: {
+      type: 'string',
+      default: '#ffffff',
+      description: '古活字データセット画像の白にマッピングする描画色',
+    },
+    black: {
+      type: 'string',
+      default: '#000000',
+      description: '古活字データセット画像の黒にマッピングする描画色',
+    },
     seed: { type: 'string', description: 'Math.random を固定する再現性シード' },
-    generatedAt: { type: 'string', description: 'XMP/sidecar metadata timestamp. 固定するとXMP込みのJPEGも再現しやすい' },
-    'generated-at': { type: 'string', description: 'XMP/sidecar metadata timestamp（generatedAtの別名）' },
+    generatedAt: {
+      type: 'string',
+      description: 'XMP/sidecar metadata timestamp. 固定するとXMP込みのJPEGも再現しやすい',
+    },
+    'generated-at': {
+      type: 'string',
+      description: 'XMP/sidecar metadata timestamp（generatedAtの別名）',
+    },
     gamma: { type: 'string', default: '1', description: '出力画像へのガンマ補正（0.1-2.2）' },
     format: { type: 'string', default: 'jpeg', choices: ['jpeg', 'png'], description: '出力形式' },
     quality: { type: 'string', default: '0.92', description: 'JPEG品質（0-1）' },
@@ -150,11 +225,17 @@ function assertAtLeast(name: string, value: number, min: number): void {
 
 function parseDataset(raw: string): DatasetConfig {
   const parsed: unknown = JSON.parse(raw);
-  if (typeof parsed !== 'object' || parsed === null || !('url' in parsed) || typeof parsed.url !== 'string') {
+  if (
+    typeof parsed !== 'object' ||
+    parsed === null ||
+    !('url' in parsed) ||
+    typeof parsed.url !== 'string'
+  ) {
     throw new Error(`--datasets must be JSON objects with a string url: ${raw}`);
   }
 
-  const priority = 'priority' in parsed && typeof parsed.priority === 'number' ? parsed.priority : undefined;
+  const priority =
+    'priority' in parsed && typeof parsed.priority === 'number' ? parsed.priority : undefined;
   return priority === undefined ? { url: parsed.url } : { url: parsed.url, priority };
 }
 
@@ -168,15 +249,23 @@ function parseManualPositions(raw: string | undefined) {
     throw new Error('--manual-positions must be a JSON array');
   }
 
-  return parsed.map((item, index) => {
+  return parsed.map((item: unknown, index) => {
     if (typeof item !== 'object' || item === null) {
       throw new Error(`--manual-positions[${index}] must be an object`);
     }
-    const position = 'position' in item ? Number(item.position) : NaN;
-    const offsetX = 'offsetX' in item ? Number(item.offsetX) : 0;
-    const offsetY = 'offsetY' in item ? Number(item.offsetY) : 0;
-    if (!Number.isInteger(position) || position < 0 || !Number.isFinite(offsetX) || !Number.isFinite(offsetY)) {
-      throw new Error(`--manual-positions[${index}] must contain position, offsetX, and offsetY numbers`);
+    const fields = item as Record<string, unknown>;
+    const position = Number(fields.position);
+    const offsetX = fields.offsetX === undefined ? 0 : Number(fields.offsetX);
+    const offsetY = fields.offsetY === undefined ? 0 : Number(fields.offsetY);
+    if (
+      !Number.isInteger(position) ||
+      position < 0 ||
+      !Number.isFinite(offsetX) ||
+      !Number.isFinite(offsetY)
+    ) {
+      throw new Error(
+        `--manual-positions[${index}] must contain position, offsetX, and offsetY numbers`,
+      );
     }
     return { position, offsetX, offsetY };
   });
@@ -213,7 +302,9 @@ export function readCliOptions(): CliOptions | undefined {
   assertGamma(gamma);
 
   const seed = typeof values.seed === 'string' ? parseInteger('seed', values.seed) : undefined;
-  const datasets = Array.isArray(values.datasets) ? values.datasets.map((item) => parseDataset(String(item))) : [];
+  const datasets = Array.isArray(values.datasets)
+    ? values.datasets.map((item) => parseDataset(String(item)))
+    : [];
   const format = values.format === 'png' ? 'png' : 'jpeg';
   const metadataOutput =
     typeof values['metadata-output'] === 'string'
@@ -221,25 +312,63 @@ export function readCliOptions(): CliOptions | undefined {
       : typeof values.metadataOutput === 'string'
         ? values.metadataOutput
         : undefined;
-  const charsPerLine = typeof values['chars-per-line'] === 'string' ? values['chars-per-line'] : String(values.charsPerLine);
-  const lineGap = typeof values['line-gap'] === 'string' ? values['line-gap'] : String(values.lineGap);
+  const charsPerLine =
+    typeof values['chars-per-line'] === 'string'
+      ? values['chars-per-line']
+      : String(values.charsPerLine);
+  const lineGap =
+    typeof values['line-gap'] === 'string' ? values['line-gap'] : String(values.lineGap);
   const numLines = typeof values['num-lines'] === 'string' ? values['num-lines'] : values.numLines;
-  const charSpacing = typeof values['char-spacing'] === 'string' ? values['char-spacing'] : String(values.charSpacing);
-  const lineSpacing = typeof values['line-spacing'] === 'string' ? values['line-spacing'] : String(values.lineSpacing);
-  const margin = typeof values.margin === 'string' ? parseInteger('margin', values.margin) : undefined;
+  const charSpacing =
+    typeof values['char-spacing'] === 'string'
+      ? values['char-spacing']
+      : String(values.charSpacing);
+  const lineSpacing =
+    typeof values['line-spacing'] === 'string'
+      ? values['line-spacing']
+      : String(values.lineSpacing);
+  const margin =
+    typeof values.margin === 'string' ? parseInteger('margin', values.margin) : undefined;
   const renmenPriority =
-    typeof values['renmen-priority'] === 'string' ? values['renmen-priority'] : String(values.renmenPriority);
-  const marginTop = typeof values['margin-top'] === 'string' ? values['margin-top'] : String(values.marginTop ?? margin ?? 100);
+    typeof values['renmen-priority'] === 'string'
+      ? values['renmen-priority']
+      : String(values.renmenPriority);
+  const marginTop =
+    typeof values['margin-top'] === 'string'
+      ? values['margin-top']
+      : typeof values.marginTop === 'string'
+        ? values.marginTop
+        : String(margin ?? 100);
   const marginBottom =
-    typeof values['margin-bottom'] === 'string' ? values['margin-bottom'] : String(values.marginBottom ?? margin ?? 100);
-  const marginLeft = typeof values['margin-left'] === 'string' ? values['margin-left'] : String(values.marginLeft ?? margin ?? 100);
+    typeof values['margin-bottom'] === 'string'
+      ? values['margin-bottom']
+      : typeof values.marginBottom === 'string'
+        ? values.marginBottom
+        : String(margin ?? 100);
+  const marginLeft =
+    typeof values['margin-left'] === 'string'
+      ? values['margin-left']
+      : typeof values.marginLeft === 'string'
+        ? values.marginLeft
+        : String(margin ?? 100);
   const marginRight =
-    typeof values['margin-right'] === 'string' ? values['margin-right'] : String(values.marginRight ?? margin ?? 100);
-  const fontFamily = typeof values['font-family'] === 'string' ? values['font-family'] : String(values.fontFamily);
-  const fontColor = typeof values['font-color'] === 'string' ? values['font-color'] : String(values.fontColor);
-  const paperTexture = typeof values['paper-texture'] === 'string' ? values['paper-texture'] : String(values.paperTexture);
-  const pageWidth = typeof values['page-width'] === 'string' ? values['page-width'] : values.pageWidth;
-  const pageHeight = typeof values['page-height'] === 'string' ? values['page-height'] : values.pageHeight;
+    typeof values['margin-right'] === 'string'
+      ? values['margin-right']
+      : typeof values.marginRight === 'string'
+        ? values.marginRight
+        : String(margin ?? 100);
+  const fontFamily =
+    typeof values['font-family'] === 'string' ? values['font-family'] : String(values.fontFamily);
+  const fontColor =
+    typeof values['font-color'] === 'string' ? values['font-color'] : String(values.fontColor);
+  const paperTexture =
+    typeof values['paper-texture'] === 'string'
+      ? values['paper-texture']
+      : String(values.paperTexture);
+  const pageWidth =
+    typeof values['page-width'] === 'string' ? values['page-width'] : values.pageWidth;
+  const pageHeight =
+    typeof values['page-height'] === 'string' ? values['page-height'] : values.pageHeight;
   const manualPositionsRaw =
     typeof values['manual-positions'] === 'string'
       ? values['manual-positions']
@@ -251,23 +380,28 @@ export function readCliOptions(): CliOptions | undefined {
       ? values['mecab-dic']
       : typeof values.mecabDic === 'string'
         ? values.mecabDic
-        : process.env.SOAN_MECAB_DIC ?? defaultChukoDictionaryPath();
+        : (process.env.SOAN_MECAB_DIC ?? defaultChukoDictionaryPath());
   const mecabCommand =
     typeof values['mecab-command'] === 'string'
       ? values['mecab-command']
       : typeof values.mecabCommand === 'string'
         ? values.mecabCommand
-        : process.env.SOAN_MECAB_COMMAND ?? 'mecab';
+        : (process.env.SOAN_MECAB_COMMAND ?? 'mecab');
   const parsedRenmenPriority = parseNumber('renmenPriority', renmenPriority);
   const parsedCharsPerLine = parseInteger('charsPerLine', charsPerLine);
   const parsedLineGap = parseNumber('lineGap', lineGap);
-  const parsedNumLines = typeof numLines === 'string' ? parseInteger('numLines', numLines) : undefined;
-  const parsedPageWidth = typeof pageWidth === 'string' ? parseInteger('pageWidth', pageWidth) : undefined;
-  const parsedPageHeight = typeof pageHeight === 'string' ? parseInteger('pageHeight', pageHeight) : undefined;
+  const parsedNumLines =
+    typeof numLines === 'string' ? parseInteger('numLines', numLines) : undefined;
+  const parsedPageWidth =
+    typeof pageWidth === 'string' ? parseInteger('pageWidth', pageWidth) : undefined;
+  const parsedPageHeight =
+    typeof pageHeight === 'string' ? parseInteger('pageHeight', pageHeight) : undefined;
   const parsedCharSpacing = parseInteger('charSpacing', charSpacing);
   const parsedLineSpacing = parseInteger('lineSpacing', lineSpacing);
   const morphologyMode =
-    values.oldJapanese === true || values['old-japanese'] === true || values.kobun === true ? 'old-japanese' : 'modern';
+    values.oldJapanese === true || values['old-japanese'] === true || values.kobun === true
+      ? 'old-japanese'
+      : 'modern';
   const parsedMarginTop = parseInteger('marginTop', marginTop);
   const parsedMarginBottom = parseInteger('marginBottom', marginBottom);
   const parsedMarginLeft = parseInteger('marginLeft', marginLeft);
@@ -308,7 +442,8 @@ export function readCliOptions(): CliOptions | undefined {
     metadataOutput,
     force: values.force === true,
     datasets,
-    allowUnavailableChar: values.allowUnavailableChar === true || values['allow-unavailable-char'] === true,
+    allowUnavailableChar:
+      values.allowUnavailableChar === true || values['allow-unavailable-char'] === true,
     renmenPriority: parsedRenmenPriority,
     charsPerLine: parsedCharsPerLine,
     lineGap: parsedLineGap,

@@ -61,7 +61,9 @@ export function parseExtendedText(sourceText: string): ParsedExtendedText {
       const raw = sourceText.slice(index + 1, closeIndex);
       const position = directivePosition(renderChars.length);
       if (directivePositions.has(position)) {
-        throw new Error(`Only one Professional directive can be attached to render position ${position}`);
+        throw new Error(
+          `Only one Professional directive can be attached to render position ${position}`,
+        );
       }
       directives.push(parseDirective(raw, position));
       directivePositions.add(position);

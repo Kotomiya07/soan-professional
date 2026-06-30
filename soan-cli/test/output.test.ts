@@ -12,8 +12,8 @@ describe('writeImageBuffer', () => {
     writeFileSync(target, 'existing');
     symlinkSync(target, link);
 
-    expect(() => writeImageBuffer(link, Buffer.from('new'), true, 'jpeg')).toThrow(
-      'Refusing to write through symbolic link',
-    );
+    expect(() => {
+      writeImageBuffer(link, Buffer.from('new'), true, 'jpeg');
+    }).toThrow('Refusing to write through symbolic link');
   });
 });

@@ -10,7 +10,13 @@ export interface MecabOptions {
 }
 
 export function defaultChukoDictionaryPath(): string {
-  return resolve(dirname(fileURLToPath(import.meta.url)), '..', '..', 'dictionaries', 'unidic-chuko-v202512');
+  return resolve(
+    dirname(fileURLToPath(import.meta.url)),
+    '..',
+    '..',
+    'dictionaries',
+    'unidic-chuko-v202512',
+  );
 }
 
 export function isReadableDictionary(path: string): boolean {
@@ -28,10 +34,14 @@ function splitUnidicLine(line: string): MorphologyToken | undefined {
     return undefined;
   }
 
-  const [surface, reading = '', pronunciation = '', lemma = surface, pos = ''] = line.split('\t');
-  if (surface === undefined || surface === '') {
+  const columns = line.split('\t');
+  const surface = columns[0];
+  if (surface === '') {
     return undefined;
   }
+  const reading = columns[1] ?? '';
+  const lemma = columns[3] ?? surface;
+  const pos = columns[4] ?? '';
 
   return {
     line: 0,
@@ -42,7 +52,10 @@ function splitUnidicLine(line: string): MorphologyToken | undefined {
   };
 }
 
-export async function analyzeWithMecab(text: string, options: MecabOptions): Promise<readonly MorphologyToken[]> {
+export async function analyzeWithMecab(
+  text: string,
+  options: MecabOptions,
+): Promise<readonly MorphologyToken[]> {
   if (!isReadableDictionary(options.dictionaryPath)) {
     throw new Error(`MeCab dictionary is not readable: ${options.dictionaryPath}`);
   }

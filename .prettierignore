@@ -1,0 +1,6 @@
+soan-cli/dist
+soan-cli/node_modules
+soan-cli/tmp
+packages/core/dist
+dictionaries
+package/images

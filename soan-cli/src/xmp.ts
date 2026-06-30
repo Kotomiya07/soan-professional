@@ -73,7 +73,10 @@ export function injectXmpMetadata(buffer: Buffer, metadata: GenerationMetadata):
   return injectPacket(buffer, xmpPacketFromMetadata(metadata));
 }
 
-export function tryInjectXmpMetadata(buffer: Buffer, metadata: GenerationMetadata): XmpInjectionResult {
+export function tryInjectXmpMetadata(
+  buffer: Buffer,
+  metadata: GenerationMetadata,
+): XmpInjectionResult {
   try {
     return {
       buffer: injectPacket(buffer, xmpPacketFromMetadata(metadata)),

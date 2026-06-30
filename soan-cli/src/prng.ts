@@ -29,7 +29,10 @@ export function createSeededRandom(seed: number): () => number {
   };
 }
 
-export async function withSeededMathRandom<T>(seed: number | undefined, task: () => Promise<T>): Promise<T> {
+export async function withSeededMathRandom<T>(
+  seed: number | undefined,
+  task: () => Promise<T>,
+): Promise<T> {
   if (seed === undefined) {
     return task();
   }

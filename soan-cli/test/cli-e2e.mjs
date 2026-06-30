@@ -15,7 +15,9 @@ function run(args) {
     encoding: 'utf8',
   });
   if (result.status !== 0) {
-    throw new Error(`CLI failed: node dist/cli.js ${args.join(' ')}\n${result.stderr}\n${result.stdout}`);
+    throw new Error(
+      `CLI failed: node dist/cli.js ${args.join(' ')}\n${result.stderr}\n${result.stdout}`,
+    );
   }
   return result;
 }
@@ -25,7 +27,9 @@ function readJson(name) {
 }
 
 function sha256(name) {
-  return createHash('sha256').update(readFileSync(join(workdir, name))).digest('hex');
+  return createHash('sha256')
+    .update(readFileSync(join(workdir, name)))
+    .digest('hex');
 }
 
 function assert(condition, message) {
@@ -45,29 +49,42 @@ const stdoutResult = run([
   '--generated-at',
   '2026-06-29T00:00:00.000Z',
 ]);
-assert(stdoutResult.stdout.startsWith('data:image/jpeg;base64,'), 'stdout output is not a clean JPEG data URL');
+assert(
+  stdoutResult.stdout.startsWith('data:image/jpeg;base64,'),
+  'stdout output is not a clean JPEG data URL',
+);
 assert(!stdoutResult.stdout.includes('Soan: Library'), 'Soan banner leaked into stdout data URL');
 
 writeFileSync(join(workdir, 'protected.json'), 'old');
-const forceResult = spawnSync(process.execPath, [
-  cli,
-  '--text',
-  'か',
-  '--seed',
-  '1',
-  '--generated-at',
-  '2026-06-29T00:00:00.000Z',
-  '--output',
-  join(workdir, 'protected.jpg'),
-  '--metadata-output',
-  join(workdir, 'protected.json'),
-], {
-  cwd: repoRoot,
-  encoding: 'utf8',
-});
+const forceResult = spawnSync(
+  process.execPath,
+  [
+    cli,
+    '--text',
+    'か',
+    '--seed',
+    '1',
+    '--generated-at',
+    '2026-06-29T00:00:00.000Z',
+    '--output',
+    join(workdir, 'protected.jpg'),
+    '--metadata-output',
+    join(workdir, 'protected.json'),
+  ],
+  {
+    cwd: repoRoot,
+    encoding: 'utf8',
+  },
+);
 assert(forceResult.status !== 0, 'metadata sidecar overwrite without --force should fail');
-assert(readFileSync(join(workdir, 'protected.json'), 'utf8') === 'old', 'metadata sidecar was overwritten without --force');
-assert(!existsSync(join(workdir, 'protected.jpg')), 'image was written after metadata preflight failed');
+assert(
+  readFileSync(join(workdir, 'protected.json'), 'utf8') === 'old',
+  'metadata sidecar was overwritten without --force',
+);
+assert(
+  !existsSync(join(workdir, 'protected.jpg')),
+  'image was written after metadata preflight failed',
+);
 
 for (const [name, text] of [
   ['plain', 'かな'],
@@ -190,17 +207,32 @@ const id = readJson('id.json');
 const kobun = readJson('kobun.json');
 const layout = readJson('layout.json');
 
-assert(plain.selectedGlyphs.map((glyph) => glyph.token).join('|') !== boundary.selectedGlyphs.map((glyph) => glyph.token).join('|'), 'slash boundary did not affect glyph tokenization');
+assert(
+  plain.selectedGlyphs.map((glyph) => glyph.token).join('|') !==
+    boundary.selectedGlyphs.map((glyph) => glyph.token).join('|'),
+  'slash boundary did not affect glyph tokenization',
+);
 assert(jibo.selectedGlyphs[0].jibo === '加', 'jibo directive was not reflected in selected glyphs');
 assert(jibo.soanConfig.renmenPriority === 0, 'effective renmenPriority override was not recorded');
 assert(jibo.xmp.embedded === true, 'JPEG XMP was not embedded');
-const xmpNamespaceCount = readFileSync(join(workdir, 'jibo-xmp.jpg'), 'latin1').split('http://ns.adobe.com/xap/1.0/').length - 1;
+const xmpNamespaceCount =
+  readFileSync(join(workdir, 'jibo-xmp.jpg'), 'latin1').split('http://ns.adobe.com/xap/1.0/')
+    .length - 1;
 assert(xmpNamespaceCount === 1, 'JPEG should contain exactly one XMP namespace marker');
 assert(id.selectedGlyphs[0].glyphId === 1, 'dataset-wide ID directive did not select glyph ID 1');
-assert(id.xmp.embedded === false && id.xmp.reason.includes('PNG'), 'PNG XMP sidecar status is wrong');
+assert(
+  id.xmp.embedded === false && id.xmp.reason.includes('PNG'),
+  'PNG XMP sidecar status is wrong',
+);
 assert(kobun.soanConfig.morphologyMode === 'old-japanese', 'kobun mode was not recorded');
-assert(kobun.soanConfig.morphologyEngine === 'mecab-unidic-chuko', 'MeCab morphology engine was not recorded');
-assert(kobun.morphologyTokens.some((token) => token.surface === 'けふ'), 'MeCab morphology tokens were not recorded');
+assert(
+  kobun.soanConfig.morphologyEngine === 'mecab-unidic-chuko',
+  'MeCab morphology engine was not recorded',
+);
+assert(
+  kobun.morphologyTokens.some((token) => token.surface === 'けふ'),
+  'MeCab morphology tokens were not recorded',
+);
 assert(layout.soanConfig.numLines === 1, 'numLines was not recorded');
 assert(layout.soanConfig.pageWidth === 600, 'pageWidth was not recorded');
 assert(layout.soanConfig.pageHeight === 900, 'pageHeight was not recorded');
@@ -208,12 +240,33 @@ assert(layout.soanConfig.charSpacing === 4, 'charSpacing was not recorded');
 assert(layout.soanConfig.lineSpacing === 15, 'lineSpacing was not recorded');
 assert(layout.soanConfig.height === 'fit', 'height=fit was not recorded');
 assert(layout.soanConfig.scale === 1.2, 'scale was not recorded');
-assert(layout.manualPositions[0].offsetX === 12 && layout.manualPositions[0].offsetY === -8, 'manual positions were not recorded');
-assert(layout.selectedGlyphs[0].x !== undefined && layout.selectedGlyphs[0].y !== undefined, 'rendered glyph positions were not recorded');
-assert(sha256('deterministic-a.jpg') === sha256('deterministic-b.jpg'), 'same seed and generatedAt did not produce identical JPEG bytes');
+assert(
+  layout.manualPositions[0].offsetX === 12 && layout.manualPositions[0].offsetY === -8,
+  'manual positions were not recorded',
+);
+assert(
+  layout.selectedGlyphs[0].x !== undefined && layout.selectedGlyphs[0].y !== undefined,
+  'rendered glyph positions were not recorded',
+);
+assert(
+  sha256('deterministic-a.jpg') === sha256('deterministic-b.jpg'),
+  'same seed and generatedAt did not produce identical JPEG bytes',
+);
 
-for (const name of ['plain.jpg', 'boundary.jpg', 'jibo-xmp.jpg', 'id.png', 'kobun.jpg', 'layout.jpg']) {
+for (const name of [
+  'plain.jpg',
+  'boundary.jpg',
+  'jibo-xmp.jpg',
+  'id.png',
+  'kobun.jpg',
+  'layout.jpg',
+]) {
   assert(statSync(join(workdir, name)).size > 0, `${name} is empty`);
 }
 
-console.log(JSON.stringify({ workdir, checked: ['jibo', 'id', 'slash', 'kobun', 'layout', 'xmp', 'png', 'deterministic-bytes'] }));
+console.log(
+  JSON.stringify({
+    workdir,
+    checked: ['jibo', 'id', 'slash', 'kobun', 'layout', 'xmp', 'png', 'deterministic-bytes'],
+  }),
+);

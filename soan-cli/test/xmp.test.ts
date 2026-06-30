@@ -49,9 +49,9 @@ describe('injectXmpMetadata', () => {
   });
 
   it('rejects non-JPEG buffers', () => {
-    expect(() => injectXmpMetadata(Buffer.from([0x89, 0x50, 0x4e, 0x47]), metadataFixture())).toThrow(
-      'XMP metadata can only be embedded into JPEG buffers',
-    );
+    expect(() =>
+      injectXmpMetadata(Buffer.from([0x89, 0x50, 0x4e, 0x47]), metadataFixture()),
+    ).toThrow('XMP metadata can only be embedded into JPEG buffers');
   });
 
   it('falls back to compact XMP when full metadata is too large', () => {

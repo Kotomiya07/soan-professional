@@ -48,6 +48,15 @@ jobs:
       - name: Build core contracts
         run: npm --prefix soan-cli exec tsc -- -p packages/core/tsconfig.json
 
+      - name: Check formatting
+        run: npm --prefix soan-cli run format:check
+
+      - name: Run linter
+        run: npm --prefix soan-cli run lint
+
+      - name: Run typecheck
+        run: npm --prefix soan-cli run typecheck
+
       - name: Run unit tests
         run: npm --prefix soan-cli test
 
