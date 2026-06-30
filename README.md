@@ -1,4 +1,12 @@
-# soan-professional-cli v2.0.0
+# soan-professional-cli
+
+[![CI](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml)
+[![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
+[![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
+![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 
 Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 の公開対象は npm package `soan-professional-cli` です。`packages/core` と `packages/demo` は、このリポジトリ内で CLI を支える補助実装・検証用デモとして同梱しています。PixiJS ブラウザ編集 UI は範囲外です。
 

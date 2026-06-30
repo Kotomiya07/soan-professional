@@ -1,5 +1,12 @@
 # soan-professional-cli
 
+[![CI](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml)
+[![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
+![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
+![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
+![License](https://img.shields.io/badge/license-MIT-blue)
+![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
+
 `soan-professional-cli` is a TypeScript CLI for generating Soan images with the Professional control surface that can be supported by the Soan v1.1.0 compatibility renderer.
 
 The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Professional controls. The only published package is `soan-professional-cli`; repository-local `packages/core` and `packages/demo` support validation and documentation but are not separately published. PixiJS browser editing is outside this package.
