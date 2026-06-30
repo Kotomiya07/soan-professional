@@ -12,7 +12,19 @@ import type {
 } from './types.js';
 
 const require = createRequire(import.meta.url);
-const createSoan = require('soan') as SoanFactory;
+
+function loadSoanFactory(): SoanFactory {
+  try {
+    return require('../vendor/soan/soan/soan.cjs') as SoanFactory;
+  } catch (error: unknown) {
+    if (error instanceof Error && 'code' in error && error.code === 'MODULE_NOT_FOUND') {
+      return require('soan') as SoanFactory;
+    }
+    throw error;
+  }
+}
+
+const createSoan = loadSoanFactory();
 
 function soanConfigFromOptions(options: CliOptions) {
   return {

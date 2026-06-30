@@ -18,7 +18,7 @@ Professional版の全量移植は本計画上43日規模のため、最初の縦
 - `pixi run build`: TypeScript build passed
 - `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成
 
-## 2026-06-29 v1.0.0 CLI公開候補メモ
+## 2026-06-29 v1.0.1 CLI公開候補メモ
 
 oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pro 記法が metadata 記録のみでレンダリングに効かないこと、実選択 glyph ID が metadata にないこと、package が private / pre-release のままであること、`any` 型が残ることだと指摘された。
 
@@ -26,7 +26,7 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `package/soan/soan.min.js` の互換レイヤーへ Pro option を通し、`［字母］` は候補 jibo filter、`［ID］` は URL ID 直接選択としてレンダリングへ反映
 - `/` 境界は kuromoji 後の bunsetsu 配列を手動分割し、`かな` と `か/な` で連綿選択が変わることを smoke で確認
 - `selectedGlyphs` metadata を追加し、選択 glyph URL・位置・jibo・URLから抽出できる glyph ID を記録
-- `soan-professional-cli@1.0.0` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
+- `soan-professional-cli@1.0.1` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
 - `--version`, 安定した `--help`, kebab-case aliases, `--margin`, `--font-family`, 数値 range validation を追加
 - v1.2 CLI 組版オプションとして `--num-lines`, `--char-spacing`, `--line-spacing` を追加。`--num-lines` はレンダリング後の softLine 数を検証し、正確に満たせない場合は出力前に失敗する
 - JPEG 出力へ Professional metadata JSON を APP1 XMP として埋め込み。PNG は sidecar JSON を正式記録とし、`xmp.embedded: false` と理由を記録

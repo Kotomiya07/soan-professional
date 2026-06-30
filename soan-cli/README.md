@@ -3,7 +3,7 @@
 [![CI](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.0.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.0.1-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](https://github.com/Kotomiya07/soan-professional/blob/main/README.ja.md)
@@ -97,7 +97,7 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 ## Notes
 
-- PixiJS interactive editing is not part of the v1.0.0 CLI package.
+- PixiJS interactive editing is not part of the v1.0.1 CLI package.
 - When a Pro glyph directive is present, the compatibility renderer sets the effective `renmenPriority` to `0` for that render and records that value in metadata.
 - The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.
 

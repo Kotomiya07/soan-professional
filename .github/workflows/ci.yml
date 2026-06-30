@@ -88,10 +88,29 @@ jobs:
           set -euo pipefail
           packfile="$(cd soan-cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
           tmpdir="$(mktemp -d)"
-          cd "$tmpdir"
-          npm init -y >/dev/null
-          npm install "$RUNNER_TEMP/$packfile"
-          npx soan --version | grep '^1\.0\.0$'
-          npx soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output ./jibo.jpg --metadata-output ./jibo.json --force
-          npx soan --text 'けふ/こそ' --kobun --mecab-dic "${{ github.workspace }}/dictionaries/unidic-chuko-v202512" --seed 3 --generated-at 2026-06-29T00:00:00.000Z --page-width 640 --page-height 960 --manual-positions '[{"position":0,"offsetX":14,"offsetY":-6}]' --output ./kobun.jpg --metadata-output ./kobun.json --force
-          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('jibo.json','utf8')); const k=JSON.parse(fs.readFileSync('kobun.json','utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1); if(k.soanConfig.morphologyEngine!=='mecab-unidic-chuko') process.exit(2); if(k.soanConfig.pageWidth!==640 || k.manualPositions[0].offsetX!==14) process.exit(3);"
+          npm --prefix "$tmpdir" install -g "$RUNNER_TEMP/$packfile"
+          PATH="$tmpdir/bin:$PATH"
+          soan --version | grep '^1\.0\.1$'
+          soan-cli --version | grep '^1\.0\.1$'
+          soan-pro --version | grep '^1\.0\.1$'
+          soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
+          soan --text 'けふ/こそ' --kobun --mecab-dic "${{ github.workspace }}/dictionaries/unidic-chuko-v202512" --seed 3 --generated-at 2026-06-29T00:00:00.000Z --page-width 640 --page-height 960 --manual-positions '[{"position":0,"offsetX":14,"offsetY":-6}]' --output "$tmpdir/kobun.jpg" --metadata-output "$tmpdir/kobun.json" --force
+          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const k=JSON.parse(fs.readFileSync(process.argv[2],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1); if(k.soanConfig.morphologyEngine!=='mecab-unidic-chuko') process.exit(2); if(k.soanConfig.pageWidth!==640 || k.manualPositions[0].offsetX!==14) process.exit(3);" "$tmpdir/jibo.json" "$tmpdir/kobun.json"
+
+      - name: Published registry install smoke
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./soan-cli/package.json').version")"
+          if ! npm view "soan-professional-cli@${version}" version >/dev/null 2>&1; then
+            echo "soan-professional-cli@${version} is not published yet; skipping registry install smoke."
+            exit 0
+          fi
+          tmpdir="$(mktemp -d)"
+          npm --prefix "$tmpdir" install -g "soan-professional-cli@${version}"
+          PATH="$tmpdir/bin:$PATH"
+          soan --version | grep "^${version}$"
+          soan-cli --version | grep "^${version}$"
+          soan-pro --version | grep "^${version}$"
+          soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
+          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1);" "$tmpdir/jibo.json"

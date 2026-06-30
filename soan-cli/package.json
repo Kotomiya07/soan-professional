@@ -1,6 +1,6 @@
 {
   "name": "soan-professional-cli",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Professional CLI for Soan image generation",
   "homepage": "https://github.com/Kotomiya07/soan-professional#readme",
   "repository": {
@@ -32,21 +32,22 @@
     "test:e2e": "node test/cli-e2e.mjs",
     "check:mecab:nix": "nix shell nixpkgs#mecab -c bash -lc 'SOAN_MECAB_COMMAND=\"$(command -v mecab)\" npm run test:e2e'",
     "check": "npm run format:check && npm run lint && npm run typecheck && npm run test && npm run build && npm run check:mecab:nix && npm run smoke",
-    "prepack": "npm run build"
+    "prepack": "npm run build && node scripts/pack-manifest.mjs prepare",
+    "postpack": "node scripts/pack-manifest.mjs restore"
   },
   "dependencies": {
     "@napi-rs/canvas": "^0.1.80",
     "jquery": "^3.7.0",
     "jsdom": "^22.1.0",
     "kuromoji": "^0.1.2",
-    "minus-h": "^1.1.1",
-    "soan": "file:../package"
+    "minus-h": "^1.1.1"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
     "@types/node": "^22.10.2",
     "eslint": "^10.6.0",
     "prettier": "^3.9.4",
+    "soan": "file:../package",
     "typescript": "^5.7.2",
     "typescript-eslint": "^8.62.1",
     "vitest": "^4.1.9"
@@ -58,6 +59,8 @@
   },
   "files": [
     "dist",
+    "scripts",
+    "vendor",
     "README.md",
     "LICENSE",
     "package.json"
@@ -72,8 +75,5 @@
   "type": "module",
   "publishConfig": {
     "access": "public"
-  },
-  "bundleDependencies": [
-    "soan"
-  ]
+  }
 }

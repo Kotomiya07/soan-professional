@@ -136,6 +136,21 @@ jobs:
         working-directory: soan-cli
         run: npm publish --access public --provenance
 
+      - name: Verify npm registry install
+        if: ${{ github.event_name == 'push' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./soan-cli/package.json').version")"
+          tmpdir="$(mktemp -d)"
+          npm --prefix "$tmpdir" install -g "soan-professional-cli@${version}"
+          PATH="$tmpdir/bin:$PATH"
+          soan --version | grep "^${version}$"
+          soan-cli --version | grep "^${version}$"
+          soan-pro --version | grep "^${version}$"
+          soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
+          node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1);" "$tmpdir/jibo.json"
+
       - name: Publish to GitHub Packages
         if: ${{ github.event_name == 'push' && steps.github_packages.outputs.published != 'true' }}
         working-directory: soan-cli
