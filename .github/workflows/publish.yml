@@ -84,6 +84,17 @@ jobs:
         working-directory: soan-cli
         run: npm pack --dry-run
 
+      - name: Check npm package version
+        if: ${{ github.event_name == 'push' }}
+        id: npmjs
+        run: |
+          version="$(node -p "require('./soan-cli/package.json').version")"
+          if npm view "soan-professional-cli@${version}" version >/dev/null 2>&1; then
+            echo "published=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "published=false" >> "$GITHUB_OUTPUT"
+          fi
+
       - name: Publish dry run
         if: ${{ github.event_name == 'workflow_dispatch' }}
         working-directory: soan-cli
@@ -101,13 +112,13 @@ jobs:
           npm publish --access public --registry=https://npm.pkg.github.com --dry-run
 
       - name: Check npm token
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && steps.npmjs.outputs.published != 'true' }}
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: test -n "$NODE_AUTH_TOKEN"
 
       - name: Publish to npm
-        if: ${{ github.event_name == 'push' }}
+        if: ${{ github.event_name == 'push' && steps.npmjs.outputs.published != 'true' }}
         working-directory: soan-cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

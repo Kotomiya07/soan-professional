@@ -4,7 +4,7 @@
 [![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.0.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](./README.ja.md)
@@ -91,7 +91,7 @@ soan \
 
 ## Metadata
 
-The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v2.0.0. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
+The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v1.0.0. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
 
 `--seed` fixes glyph/layout selection. For byte-identical JPEGs, also pass `--generated-at <ISO timestamp>` so the XMP metadata timestamp is stable.
 
@@ -124,7 +124,7 @@ npm publish --access public --dry-run
 
 ## Scope Notes
 
-- PixiJS interactive editing is outside the v2.0.0 CLI package.
+- PixiJS interactive editing is outside the v1.0.0 CLI package.
 - Pro glyph directives set the effective `renmenPriority` to `0` for that render so position-based single-glyph controls stay unambiguous.
 - `［ID］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
 

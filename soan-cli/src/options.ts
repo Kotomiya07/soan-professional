@@ -4,7 +4,7 @@ import type { CliOptions, DatasetConfig, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
 import { defaultChukoDictionaryPath } from './mecab.js';
 
-export const CLI_VERSION = '2.0.0';
+export const CLI_VERSION = '1.0.0';
 
 function printHelp(): void {
   console.log(`soan-professional-cli ${CLI_VERSION}
@@ -51,7 +51,7 @@ Core options:
       --version                     Print version.
       --help                        Print this help.
 
-Unsupported in v2.0.0 CLI package:
+Unsupported in v1.0.0 CLI package:
   PixiJS interactive editing.
 `);
 }
