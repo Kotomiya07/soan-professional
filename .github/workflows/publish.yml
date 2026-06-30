@@ -2,15 +2,6 @@ name: Publish
 
 on:
   workflow_dispatch:
-    inputs:
-      dry_run:
-        description: 'Run npm publish as a dry run'
-        required: true
-        default: 'true'
-        type: choice
-        options:
-          - 'true'
-          - 'false'
   push:
     tags:
       - 'v*.*.*'
@@ -84,12 +75,18 @@ jobs:
         run: npm pack --dry-run
 
       - name: Publish dry run
-        if: ${{ github.event_name == 'workflow_dispatch' && inputs.dry_run == 'true' }}
+        if: ${{ github.event_name == 'workflow_dispatch' }}
         working-directory: soan-cli
         run: npm publish --access public --dry-run
 
+      - name: Check npm token
+        if: ${{ github.event_name == 'push' }}
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+        run: test -n "$NODE_AUTH_TOKEN"
+
       - name: Publish to npm
-        if: ${{ github.event_name == 'push' || (github.event_name == 'workflow_dispatch' && inputs.dry_run == 'false') }}
+        if: ${{ github.event_name == 'push' }}
         working-directory: soan-cli
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
