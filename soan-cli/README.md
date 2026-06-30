@@ -2,7 +2,7 @@
 
 `soan-professional-cli` is a TypeScript CLI for generating Soan images with the Professional control surface that can be supported by the Soan v1.1.0 compatibility renderer.
 
-The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Professional controls. v2.0.0 covers the CLI/core/demo surface; PixiJS browser editing is outside this package.
+The CLI keeps the proven Soan v1.1.0 rendering engine and adds reproducible Professional controls. The only published package is `soan-professional-cli`; repository-local `packages/core` and `packages/demo` support validation and documentation but are not separately published. PixiJS browser editing is outside this package.
 
 - full-width bracket Pro notation: `か［加］な` and `か［1］`, enforced during glyph selection
 - slash boundaries: `はな/の`, enforced as manual bunsetsu split points

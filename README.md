@@ -1,10 +1,10 @@
 # soan-professional-cli v2.0.0
 
-Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 は CLI / core / demo の互換リリースであり、PixiJS ブラウザ編集 UI は範囲外です。
+Soan Professional CLI は、既存の Soan v1.1.0 レンダリングエンジンを互換レイヤーとして使いながら、Professional 版の CLI 向け制御を移植した画像生成ツールです。v2.0.0 の公開対象は npm package `soan-professional-cli` です。`packages/core` と `packages/demo` は、このリポジトリ内で CLI を支える補助実装・検証用デモとして同梱しています。PixiJS ブラウザ編集 UI は範囲外です。
 
 ## 現在の公開単位
 
-公開対象は `soan-cli/` の npm package `soan-professional-cli@2.0.0` です。インストール後は次の bin を提供します。
+公開対象は `soan-cli/` の npm package `soan-professional-cli@2.0.0` だけです。インストール後は次の bin を提供します。
 
 - `soan`
 - `soan-cli`
@@ -104,8 +104,8 @@ npx soan --text 'けふ/こそ' --kobun --seed 3 --output ./kobun.jpg --metadata
 ## ディレクトリ
 
 - `soan-cli/`: npm package 本体
-- `packages/core/`: renderer-independent core contracts
-- `packages/demo/`: PixiJSを使わない静的CLI demo
+- `packages/core/`: repo内の renderer-independent core contracts。現時点では単独公開対象ではありません
+- `packages/demo/`: PixiJSを使わない静的CLI demo。現時点では単独公開対象ではありません
 - `soan-cli/src/`: TypeScript CLI 実装
 - `soan-cli/test/`: Vitest unit tests
 - `package/`: Soan v1.1.0 互換 dependency
