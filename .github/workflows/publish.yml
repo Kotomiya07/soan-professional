@@ -9,6 +9,7 @@ on:
 permissions:
   contents: read
   id-token: write
+  packages: write
 
 jobs:
   publish:
@@ -88,6 +89,17 @@ jobs:
         working-directory: soan-cli
         run: npm publish --access public --dry-run
 
+      - name: Publish GitHub Packages dry run
+        if: ${{ github.event_name == 'workflow_dispatch' }}
+        working-directory: soan-cli
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          npm pkg set name=@kotomiya07/soan-professional-cli
+          npm pkg set publishConfig.registry=https://npm.pkg.github.com
+          printf '@kotomiya07:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > .npmrc
+          npm publish --access public --registry=https://npm.pkg.github.com --dry-run
+
       - name: Check npm token
         if: ${{ github.event_name == 'push' }}
         env:
@@ -100,3 +112,14 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
         run: npm publish --access public --provenance
+
+      - name: Publish to GitHub Packages
+        if: ${{ github.event_name == 'push' }}
+        working-directory: soan-cli
+        env:
+          NODE_AUTH_TOKEN: ${{ github.token }}
+        run: |
+          npm pkg set name=@kotomiya07/soan-professional-cli
+          npm pkg set publishConfig.registry=https://npm.pkg.github.com
+          printf '@kotomiya07:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > .npmrc
+          npm publish --access public --registry=https://npm.pkg.github.com

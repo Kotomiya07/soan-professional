@@ -2,6 +2,15 @@
   "name": "soan-professional-cli",
   "version": "2.0.0",
   "description": "Professional CLI for Soan image generation",
+  "homepage": "https://github.com/Kotomiya07/soan-professional#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Kotomiya07/soan-professional.git",
+    "directory": "soan-cli"
+  },
+  "bugs": {
+    "url": "https://github.com/Kotomiya07/soan-professional/issues"
+  },
   "author": "Center for Open Data in the Humanities, Research Organization of Information and Systems",
   "contributors": [
     "Jun HOMMA (https://www.flxstyle.com/)"
