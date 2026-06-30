@@ -108,7 +108,10 @@ jobs:
         run: |
           npm pkg set name=@kotomiya07/soan-professional-cli
           npm pkg set publishConfig.registry=https://npm.pkg.github.com
-          printf '@kotomiya07:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > .npmrc
+          {
+            echo '@kotomiya07:registry=https://npm.pkg.github.com'
+            echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}"
+          } >> "$NPM_CONFIG_USERCONFIG"
           npm publish --access public --registry=https://npm.pkg.github.com --dry-run
 
       - name: Check npm token
@@ -132,5 +135,8 @@ jobs:
         run: |
           npm pkg set name=@kotomiya07/soan-professional-cli
           npm pkg set publishConfig.registry=https://npm.pkg.github.com
-          printf '@kotomiya07:registry=https://npm.pkg.github.com\n//npm.pkg.github.com/:_authToken=%s\n' "$NODE_AUTH_TOKEN" > .npmrc
+          {
+            echo '@kotomiya07:registry=https://npm.pkg.github.com'
+            echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}"
+          } >> "$NPM_CONFIG_USERCONFIG"
           npm publish --access public --registry=https://npm.pkg.github.com
