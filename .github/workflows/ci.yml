@@ -91,7 +91,7 @@ jobs:
           cd "$tmpdir"
           npm init -y >/dev/null
           npm install "$RUNNER_TEMP/$packfile"
-          npx soan --version | grep '^2\.0\.0$'
+          npx soan --version | grep '^1\.0\.0$'
           npx soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output ./jibo.jpg --metadata-output ./jibo.json --force
           npx soan --text 'けふ/こそ' --kobun --mecab-dic "${{ github.workspace }}/dictionaries/unidic-chuko-v202512" --seed 3 --generated-at 2026-06-29T00:00:00.000Z --page-width 640 --page-height 960 --manual-positions '[{"position":0,"offsetX":14,"offsetY":-6}]' --output ./kobun.jpg --metadata-output ./kobun.json --force
           node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync('jibo.json','utf8')); const k=JSON.parse(fs.readFileSync('kobun.json','utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1); if(k.soanConfig.morphologyEngine!=='mecab-unidic-chuko') process.exit(2); if(k.soanConfig.pageWidth!==640 || k.manualPositions[0].offsetX!==14) process.exit(3);"
