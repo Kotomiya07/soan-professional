@@ -159,7 +159,7 @@ jobs:
           soan --version | grep "^${version}$"
           soan-cli --version | grep "^${version}$"
           soan-pro --version | grep "^${version}$"
-          soan --text '［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
+          soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
           node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1);" "$tmpdir/jibo.json"
 
       - name: Publish to GitHub Packages
