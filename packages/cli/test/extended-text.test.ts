@@ -9,24 +9,44 @@ describe('parseExtendedText', () => {
     expect(parsed.boundaries).toEqual([{ position: 2 }]);
   });
 
-  it('records full-width jibo directives on the previous rendered character', () => {
+  it('expands full-width jibo directives into render text at the directive position', () => {
+    const parsed = parseExtendedText('［加］［八良］ぬ');
+
+    expect(parsed.renderText).toBe('かはらぬ');
+    expect(parsed.directives).toEqual([
+      { kind: 'jibo', position: 0, raw: '加', jibo: '加' },
+      { kind: 'jibo', position: 1, raw: '八良', jibo: '八良' },
+    ]);
+  });
+
+  it('keeps legacy postfix jibo directives as compatibility notation', () => {
     const parsed = parseExtendedText('か［加］な');
 
     expect(parsed.renderText).toBe('かな');
     expect(parsed.directives).toEqual([{ kind: 'jibo', position: 0, raw: '加', jibo: '加' }]);
   });
 
-  it('records full-width numeric directives as glyph ids', () => {
-    const parsed = parseExtendedText('か［4867］な');
+  it('records full-width numeric directives as glyph ids and expands them with an addressable placeholder', () => {
+    const parsed = parseExtendedText('［4867］［八良］ぬ');
 
-    expect(parsed.renderText).toBe('かな');
-    expect(parsed.directives).toEqual([{ kind: 'id', position: 0, raw: '4867', id: 4867 }]);
+    expect(parsed.renderText).toBe('Nはらぬ');
+    expect(parsed.directives).toEqual([
+      { kind: 'id', position: 0, raw: '4867', id: 4867 },
+      { kind: 'jibo', position: 1, raw: '八良', jibo: '八良' },
+    ]);
+  });
+
+  it('accepts ID-prefixed glyph id directives', () => {
+    const parsed = parseExtendedText('［ID4867］ぬ');
+
+    expect(parsed.renderText).toBe('Nぬ');
+    expect(parsed.directives).toEqual([{ kind: 'id', position: 0, raw: 'ID4867', id: 4867 }]);
   });
 
   it('normalizes full-width digits inside directives before parsing ids', () => {
-    const parsed = parseExtendedText('か［４８６７］な');
+    const parsed = parseExtendedText('［４８６７］な');
 
-    expect(parsed.renderText).toBe('かな');
+    expect(parsed.renderText).toBe('Nな');
     expect(parsed.directives).toEqual([{ kind: 'id', position: 0, raw: '４８６７', id: 4867 }]);
   });
 
@@ -34,9 +54,13 @@ describe('parseExtendedText', () => {
     expect(() => parseExtendedText('か［］な')).toThrow('Professional directive must not be empty');
   });
 
-  it('rejects multiple directives attached to the same rendered character', () => {
-    expect(() => parseExtendedText('か［加］［可］')).toThrow(
-      'Only one Professional directive can be attached to render position 0',
-    );
+  it('treats a directive after another directive as another inline replacement', () => {
+    const parsed = parseExtendedText('か［加］［可］');
+
+    expect(parsed.renderText).toBe('かか');
+    expect(parsed.directives).toEqual([
+      { kind: 'jibo', position: 0, raw: '加', jibo: '加' },
+      { kind: 'jibo', position: 1, raw: '可', jibo: '可' },
+    ]);
   });
 });

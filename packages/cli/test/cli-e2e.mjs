@@ -160,7 +160,7 @@ for (const [name, text] of [
 
 run([
   '--text',
-  'か［加］/な',
+  '［加］/な',
   '--seed',
   '7',
   '--gamma',
@@ -176,7 +176,7 @@ run([
 
 run([
   '--text',
-  'か［1］',
+  '［1］',
   '--seed',
   '3',
   '--format',
@@ -265,6 +265,7 @@ assert(
     boundary.selectedGlyphs.map((glyph) => glyph.token).join('|'),
   'slash boundary did not affect glyph tokenization',
 );
+assert(jibo.renderText === 'かな', 'prefix jibo directive did not expand to render text');
 assert(jibo.selectedGlyphs[0].jibo === '加', 'jibo directive was not reflected in selected glyphs');
 assert(jibo.soanConfig.renmenPriority === 0, 'effective renmenPriority override was not recorded');
 assert(jibo.xmp.embedded === true, 'JPEG XMP was not embedded');

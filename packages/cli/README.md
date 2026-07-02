@@ -27,7 +27,7 @@ The package provides three equivalent command names:
 
 ```bash
 soan \
-  --text "か［加］/な" \
+  --text "［加］/な" \
   --seed 42 \
   --generated-at 2026-06-29T00:00:00.000Z \
   --gamma 1.1 \
@@ -62,7 +62,7 @@ soan \
 
 ## Features
 
-- full-width bracket Pro notation: `か［加］な` and `か［1］`
+- full-width bracket Pro notation: `［加］な`, `［八良］ぬ`, and `［ID4867］`
 - slash boundaries: `はな/の`
 - deterministic glyph/layout selection with `--seed`
 - byte-level reproducible JPEGs when `--generated-at` is fixed

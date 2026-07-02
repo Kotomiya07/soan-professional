@@ -147,6 +147,36 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 - local packed tarball `soan-professional-cli-1.2.2.tgz` を隔離 cache / tmp prefix へ global installし、`soan`, `soan-cli`, `soan-pro` の `--version` が `1.2.2` を返すことを確認
 - 同じ packed install で `soan --text 'か［加］/な' ...` が成功し、metadata の先頭 glyph が jibo `加` になることを確認
 
+## 2026-07-02 Pro字母指定の仕様照合と修正
+
+参照先 `https://dev.2sc1815j.net/soan/about.html` を確認したところ、プロ版の字母指定は `か［加］` のような後置annotationではなく、`［加］［八］らぬ` や `［加］［八良］ぬ` のように、入力本文中のかなを全角角括弧directiveで置き換える記法だった。ID指定も `［4867］` だけでなく `［ID4867］` が例示されていた。
+
+改善過程:
+
+1. 既存実装 `packages/cli/src/extended-text.ts` と `packages/cli/test/extended-text.test.ts` を確認し、現在のテストが `か［加］な` を正として固定していることを確認した。
+2. 参照仕様の例に合わせて、`［加］［八良］ぬ` が `かはらぬ` に展開される赤テストを追加した。
+3. parserに字母漢字からかなへ戻す最小対応表を追加し、前置・連続directiveをインライン置換として扱うように修正した。
+4. 後方互換のため、既存CLI記法 `か［加］` は引き続き「直前文字へのdirective」として解釈する。
+5. ID directiveはparser時点ではIDから本文かなを引けないため、renderer内のID直接選択を起動できる既知placeholder `N` を置く設計にした。`ID` prefixと全角数字はNFKC正規化で受け付ける。
+6. README、package README、smoke、e2eの代表入力をインライン置換型へ更新した。
+
+検証:
+
+- `uv run --no-sync npm --prefix packages/cli test`: unit tests passed
+
+## 2026-07-02 GitHub Release自動更新
+
+`v*.*.*` tag pushで起動する `publish.yml` に、GitHub Releaseの自動作成・更新を追加した。`workflow_dispatch` は従来通りdry-run扱いで、Releaseやregistryを更新しない。
+
+改善過程:
+
+1. 既存 `publish.yml` は npm / GitHub Packages への公開だけで、GitHub Releaseを作成・更新していないことを確認した。
+2. Release assetとして `npm pack` で生成した `soan-professional-cli-<version>.tgz` と `.sha256` を作る step を追加した。
+3. `softprops/action-gh-release@v2` で tag名のReleaseをupsertし、auto-generated release notesとasset上書きを有効にした。
+4. Release更新に必要なため、publish workflowの `contents` permissionを `read` から `write` に変更した。
+5. CI / publish workflow内に残っていた旧Pro記法 `か［加］/な` の smoke を `［加］/な` に更新した。
+6. README / README.ja.md のrelease説明を、GitHub Release asset更新まで含む表現に更新した。
+
 ## 概要
 
 現代日本語テキストからくずし字（古活字）画像を生成するJavaScriptライブラリ「そあん」に、Professional版の機能を移植する。

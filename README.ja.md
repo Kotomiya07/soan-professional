@@ -33,7 +33,7 @@ pixi run build
 
 ```bash
 soan \
-  --text "か［加］/な" \
+  --text "［加］/な" \
   --seed 42 \
   --generated-at 2026-06-29T00:00:00.000Z \
   --gamma 1.1 \
@@ -74,7 +74,7 @@ soan \
 
 ## 機能
 
-- `［字母］` / `［ID］` によるPro記法
+- `［加］`, `［八良］`, `［ID4867］` のようなインライン置換型Pro記法
 - `/` による手動bunsetsu / renmen境界
 - `--seed` によるglyph / layout選択の再現性
 - `--generated-at` 固定時のbyte-level reproducible JPEG
@@ -112,7 +112,7 @@ npm pack --dry-run
 npm publish --access public --dry-run
 ```
 
-release tagの公開はGitHub Actionsで行います。npmへの公開はGitHub Actions OIDCによるnpm Trusted Publishingを使い、GitHub Packagesへの公開はworkflowの `GITHUB_TOKEN` を使います。
+release tagの公開はGitHub Actionsで行います。publish workflowは対応するGitHub Releaseを作成または更新し、npm tarballとSHA-256ファイルをassetとしてアップロードします。npmへの公開はGitHub Actions OIDCによるnpm Trusted Publishingを使い、GitHub Packagesへの公開はworkflowの `GITHUB_TOKEN` を使います。
 
 ## ディレクトリ
 
@@ -128,7 +128,7 @@ release tagの公開はGitHub Actionsで行います。npmへの公開はGitHub 
 
 - PixiJS interactive editingはv1.2.0 CLI packageの範囲外です。
 - Pro glyph指示があるレンダリングでは、位置指定を曖昧にしないため、その実行に限って実効 `renmenPriority` を `0` にします。
-- `［ID］` は設定済みdatasetと同梱fallback画像から解決します。CLIはglobal dataset registryを提供しません。
+- `［ID］` / `［ID4867］` は設定済みdatasetと同梱fallback画像から解決します。CLIはglobal dataset registryを提供しません。
 
 ## 謝辞・参照
 

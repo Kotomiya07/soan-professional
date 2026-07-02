@@ -33,7 +33,7 @@ pixi run build
 
 ```bash
 soan \
-  --text "か［加］/な" \
+  --text "［加］/な" \
   --seed 42 \
   --generated-at 2026-06-29T00:00:00.000Z \
   --gamma 1.1 \
@@ -74,7 +74,7 @@ soan \
 
 ## Features
 
-- Pro notation with `［字母］` and `［ID］` directives
+- Pro notation with inline replacement directives such as `［加］`, `［八良］`, and `［ID4867］`
 - Manual bunsetsu / renmen boundaries with `/`
 - Reproducible glyph and layout selection with `--seed`
 - Byte-level reproducible JPEG output when `--generated-at` is fixed
@@ -112,7 +112,7 @@ npm pack --dry-run
 npm publish --access public --dry-run
 ```
 
-Release tags are published by GitHub Actions. npm publication uses npm Trusted Publishing with GitHub Actions OIDC, and GitHub Packages publication uses the workflow `GITHUB_TOKEN`.
+Release tags are published by GitHub Actions. The publish workflow creates or updates the matching GitHub Release, uploads the packed npm tarball plus its SHA-256 file, publishes to npm with Trusted Publishing, and publishes to GitHub Packages with the workflow `GITHUB_TOKEN`.
 
 ## Repository Layout
 
@@ -128,7 +128,7 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 - PixiJS interactive editing is outside the v1.2.0 CLI package.
 - Pro glyph directives set the effective `renmenPriority` to `0` for that render so position-based single-glyph controls stay unambiguous.
-- `［ID］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
+- `［ID］` / `［ID4867］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
 
 ## Acknowledgements
 

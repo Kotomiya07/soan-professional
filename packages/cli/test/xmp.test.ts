@@ -6,7 +6,7 @@ function metadataFixture(): GenerationMetadata {
   return {
     engine: 'soan-v1.1.0-compat',
     professionalSlice: true,
-    sourceText: 'か［加］',
+    sourceText: '［加］',
     renderText: 'か',
     gamma: 1,
     format: 'jpeg',
