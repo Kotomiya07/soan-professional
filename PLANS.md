@@ -131,6 +131,22 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 - `nix shell nixpkgs#mecab -c bash -lc 'SOAN_MECAB_COMMAND="$(command -v mecab)" npm --prefix packages/cli run test:e2e'`: `assets/dictionaries/unidic-chuko-v202512` を使う e2e passed
 - `npm pack --dry-run` in `packages/cli`: tarball contents include bundled `vendor/soan`; generated pack artifacts were removed afterward
 
+## 2026-07-02 v1.2.2 publish修正メモ
+
+`v1.2.1` は npm Trusted Publishing までは成功したが、直後の registry install smoke が失敗した。初回は npm registry の反映遅延で `1.2.1` が見えず、再実行後は fresh global install 環境で `@napi-rs/canvas` の native binding が見つからないことを確認した。また公開 tarball から起動した `soan --version` が package version ではなく hard-coded `1.2.0` を返す問題も検出した。
+
+改善済み:
+- CLI package version を `1.2.2` に更新
+- `CLI_VERSION` を `1.2.2` に更新
+- `@napi-rs/canvas` を `0.1.100` に固定し、platform native packages を CLI package の `optionalDependencies` に明示
+- publish workflow の npm registry install retry を 5 回から 12 回へ増やし、registry 反映遅延で落ちにくくした
+
+検証済み:
+- `npm --prefix packages/cli run check`: format / lint / typecheck / unit test / build / Nix MeCab e2e / smoke passed
+- `npm --prefix packages/cli exec tsc -- -p packages/core/tsconfig.json`: core contracts build passed
+- local packed tarball `soan-professional-cli-1.2.2.tgz` を隔離 cache / tmp prefix へ global installし、`soan`, `soan-cli`, `soan-pro` の `--version` が `1.2.2` を返すことを確認
+- 同じ packed install で `soan --text 'か［加］/な' ...` が成功し、metadata の先頭 glyph が jibo `加` になることを確認
+
 ## 概要
 
 現代日本語テキストからくずし字（古活字）画像を生成するJavaScriptライブラリ「そあん」に、Professional版の機能を移植する。

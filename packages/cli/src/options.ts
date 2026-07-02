@@ -4,7 +4,7 @@ import type { CliOptions, DatasetConfig, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
 import { defaultChukoDictionaryPath } from './dictionary.js';
 
-export const CLI_VERSION = '1.2.0';
+export const CLI_VERSION = '1.2.2';
 
 function printHelp(): void {
   console.log(`soan-professional-cli ${CLI_VERSION}

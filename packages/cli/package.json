@@ -1,6 +1,6 @@
 {
   "name": "soan-professional-cli",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "description": "Professional CLI for Soan image generation",
   "homepage": "https://github.com/Kotomiya07/soan-professional#readme",
   "repository": {
@@ -36,11 +36,24 @@
     "postpack": "node scripts/pack-manifest.mjs restore"
   },
   "dependencies": {
-    "@napi-rs/canvas": "^0.1.80",
+    "@napi-rs/canvas": "0.1.100",
     "jquery": "^3.7.0",
     "jsdom": "^22.1.0",
     "kuromoji": "^0.1.2",
     "minus-h": "^1.1.1"
+  },
+  "optionalDependencies": {
+    "@napi-rs/canvas-android-arm64": "0.1.100",
+    "@napi-rs/canvas-darwin-arm64": "0.1.100",
+    "@napi-rs/canvas-darwin-x64": "0.1.100",
+    "@napi-rs/canvas-linux-arm-gnueabihf": "0.1.100",
+    "@napi-rs/canvas-linux-arm64-gnu": "0.1.100",
+    "@napi-rs/canvas-linux-arm64-musl": "0.1.100",
+    "@napi-rs/canvas-linux-riscv64-gnu": "0.1.100",
+    "@napi-rs/canvas-linux-x64-gnu": "0.1.100",
+    "@napi-rs/canvas-linux-x64-musl": "0.1.100",
+    "@napi-rs/canvas-win32-arm64-msvc": "0.1.100",
+    "@napi-rs/canvas-win32-x64-msvc": "0.1.100"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
