@@ -1,5 +1,5 @@
 import { existsSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createHash } from 'node:crypto';
 import { spawnSync } from 'node:child_process';
@@ -32,6 +32,35 @@ function sha256(name) {
     .digest('hex');
 }
 
+function expectedDefaultDictionaryPath() {
+  if (process.platform === 'win32') {
+    return join(
+      process.env.LOCALAPPDATA ?? join(homedir(), 'AppData', 'Local'),
+      'soan-professional',
+      'dictionaries',
+      'unidic-chuko-v202512',
+    );
+  }
+
+  if (process.platform === 'darwin') {
+    return join(
+      homedir(),
+      'Library',
+      'Application Support',
+      'soan-professional',
+      'dictionaries',
+      'unidic-chuko-v202512',
+    );
+  }
+
+  return join(
+    process.env.XDG_DATA_HOME ?? join(homedir(), '.local', 'share'),
+    'soan-professional',
+    'dictionaries',
+    'unidic-chuko-v202512',
+  );
+}
+
 function assert(condition, message) {
   if (!condition) {
     throw new Error(message);
@@ -49,6 +78,11 @@ const dictPathResult = run(['dict', 'path', '--output', workdir]);
 assert(
   dictPathResult.stdout.trim().endsWith('unidic-chuko-v202512'),
   'dict path did not print the expected dictionary directory',
+);
+const defaultDictPathResult = run(['dict', 'path']);
+assert(
+  defaultDictPathResult.stdout.trim() === expectedDefaultDictionaryPath(),
+  'dict path did not print the default user data dictionary directory',
 );
 const removedDownloadDictResult = spawnSync(process.execPath, [cli, 'download-dict', '--help'], {
   cwd: repoRoot,
@@ -163,7 +197,7 @@ run([
   '--seed',
   '3',
   '--mecab-dic',
-  '../dictionaries/unidic-chuko-v202512',
+  '../../assets/dictionaries/unidic-chuko-v202512',
   '--generated-at',
   '2026-06-29T00:00:00.000Z',
   '--output',
@@ -255,6 +289,7 @@ assert(
 assert(layout.soanConfig.numLines === 1, 'numLines was not recorded');
 assert(layout.soanConfig.pageWidth === 600, 'pageWidth was not recorded');
 assert(layout.soanConfig.pageHeight === 900, 'pageHeight was not recorded');
+assert(layout.image.width === 720, 'scaled pageWidth was not reflected in image width');
 assert(layout.soanConfig.charSpacing === 4, 'charSpacing was not recorded');
 assert(layout.soanConfig.lineSpacing === 15, 'lineSpacing was not recorded');
 assert(layout.soanConfig.height === 'fit', 'height=fit was not recorded');
@@ -266,6 +301,10 @@ assert(
 assert(
   layout.selectedGlyphs[0].x !== undefined && layout.selectedGlyphs[0].y !== undefined,
   'rendered glyph positions were not recorded',
+);
+assert(
+  layout.selectedGlyphs[0].x > layout.image.width / layout.soanConfig.scale / 2,
+  'forced wider page did not right-align glyph layout',
 );
 assert(
   sha256('deterministic-a.jpg') === sha256('deterministic-b.jpg'),

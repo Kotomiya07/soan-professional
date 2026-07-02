@@ -43,18 +43,17 @@ soan \
 `--old-japanese` / `--kobun` uses MeCab with Chuko-Wabun UniDic when `mecab` is available and the dictionary is provided by `--mecab-dic` or `SOAN_MECAB_DIC`. The dictionary is distributed separately from the npm package and is licensed under CC BY-NC-SA 4.0.
 
 ```bash
-soan dict install --output ./dictionaries
-export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
+soan dict install
+soan dict path
 ```
 
 The command downloads the release asset, verifies the pinned SHA-256, checks the archive paths, and extracts the dictionary.
-Use `soan dict update --output ./dictionaries` to replace the local copy with the pinned release, and `soan dict path --output ./dictionaries` to print the dictionary path for scripts.
+By default, the dictionary is installed under the user data directory. Use `soan dict update` to replace the local copy with the pinned release, and `soan dict path` to print the dictionary path for scripts. `--output <dir>` remains available when you need a project-local or CI-specific dictionary parent directory.
 
 ```bash
 soan \
   --text "けふ/こそ" \
   --kobun \
-  --mecab-dic ./dictionaries/unidic-chuko-v202512 \
   --seed 5 \
   --output ./kobun.jpg \
   --metadata-output ./kobun.json \
@@ -86,7 +85,7 @@ pixi run check
 Useful release checks:
 
 ```bash
-cd soan-cli
+cd packages/cli
 npm run test:e2e
 npm pack --dry-run
 npm publish --access public --dry-run

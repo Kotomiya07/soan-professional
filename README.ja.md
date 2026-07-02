@@ -53,12 +53,12 @@ soan \
 辞書はnpm packageには同梱していません。GitHub Release assetとして別配布します。中古和文UniDicは、このCLI本体のMIT licenseとは別にCC BY-NC-SA 4.0で配布されます。非営利・継承条件と attribution は、展開後の `unidic-chuko-v202512/README.md` を確認してください。
 
 ```bash
-soan dict install --output ./dictionaries
-export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
+soan dict install
+soan dict path
 ```
 
 このコマンドはrelease assetをダウンロードし、固定SHA-256、archive path safetyを検証してから辞書を展開します。
-ローカル辞書を固定releaseで置き換える場合は `soan dict update --output ./dictionaries`、scriptから辞書パスだけ確認する場合は `soan dict path --output ./dictionaries` を使います。
+デフォルトではユーザーデータ配下（macOSは `~/Library/Application Support/soan-professional/dictionaries`、Linuxは `${XDG_DATA_HOME:-~/.local/share}/soan-professional/dictionaries`、Windowsは `%LOCALAPPDATA%\soan-professional\dictionaries`）へインストールします。ローカル辞書を固定releaseで置き換える場合は `soan dict update`、scriptから辞書パスだけ確認する場合は `soan dict path` を使います。project-localやCI固有の親ディレクトリに置きたい場合は、従来通り `--output <dir>` を指定できます。
 
 `--kobun` または `--old-japanese` と一緒に使います。
 
@@ -66,7 +66,6 @@ export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
 soan \
   --text "けふ/こそ" \
   --kobun \
-  --mecab-dic ./dictionaries/unidic-chuko-v202512 \
   --seed 5 \
   --output ./kobun.jpg \
   --metadata-output ./kobun.json \
@@ -81,6 +80,7 @@ soan \
 - `--generated-at` 固定時のbyte-level reproducible JPEG
 - `--gamma` によるガンマ補正
 - `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, `--page-height` による組版制御
+- 画像サイズを明示指定した場合、生成内容はページ右上に揃えます
 - `--manual-positions` によるglyph手動位置調整
 - `--old-japanese` / `--kobun` による中古和文UniDic解析
 - `--metadata-output` によるcanonical sidecar metadata
@@ -100,13 +100,13 @@ soan \
 
 ```bash
 pixi run check
-npm --prefix soan-cli audit
+npm --prefix packages/cli audit
 ```
 
 公開前チェック:
 
 ```bash
-cd soan-cli
+cd packages/cli
 npm run test:e2e
 npm pack --dry-run
 npm publish --access public --dry-run
@@ -116,11 +116,12 @@ release tagの公開はGitHub Actionsで行います。npmへの公開はGitHub 
 
 ## ディレクトリ
 
-- `soan-cli/`: npm package本体
+- `packages/cli/`: npm package本体
 - `packages/core/`: repo内検証用のrenderer-independent contracts
 - `packages/demo/`: PixiJSを使わない静的CLI demo
-- `package/`: bundled Soan v1.1.0 compatibility dependency
-- `dictionaries/`: ローカル開発用辞書配置。npm tarballには含めません
+- `packages/legacy-soan/`: bundled Soan v1.1.0 compatibility dependency
+- `assets/datasets/`: 任意のローカルdataset配置。gitとnpm packageには含めません
+- `assets/dictionaries/`: 任意のローカル開発用辞書配置。gitとnpm packageには含めません
 - `PLANS.md`: 移植計画と検証履歴
 
 ## スコープ

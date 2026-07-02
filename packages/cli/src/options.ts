@@ -2,7 +2,7 @@ import { parseArgs } from 'node:util';
 import { parseArgsWithHelp, usage } from 'minus-h';
 import type { CliOptions, DatasetConfig, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
-import { defaultChukoDictionaryPath } from './mecab.js';
+import { defaultChukoDictionaryPath } from './dictionary.js';
 
 export const CLI_VERSION = '1.2.0';
 
@@ -58,7 +58,7 @@ Dictionary commands:
   dict install                      Download and extract Chuko-Wabun UniDic.
   dict update                       Replace the local dictionary with the current pinned release.
   dict path                         Print the expected dictionary directory path.
-      --output <dir>                Parent directory. Default: ./dictionaries
+      --output <dir>                Parent directory. Default: user data directory
       --force                       Replace an existing unidic-chuko-v202512 directory.
 
 Unsupported in v1.2.0 CLI package:

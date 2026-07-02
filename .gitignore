@@ -6,17 +6,19 @@
 
 # Node dependencies and build outputs
 node_modules/
-soan-cli/node_modules/
-soan-cli/dist/
+packages/cli/node_modules/
+packages/cli/dist/
 packages/*/dist/
 
 # CLI smoke-test/generated outputs
-soan-cli/tmp/
+packages/cli/tmp/
 
-# Large source datasets are kept out of git for now.
-# Add a small fixture directory later when local dataset tests are introduced.
+# Large source datasets and dictionaries are kept out of git for now.
+# Canonical local locations are assets/datasets/ and assets/dictionaries/.
 datasets/
 dictionaries/
+assets/datasets/
+assets/dictionaries/
 
-# Downloaded release archives; source is kept unpacked under package/ and soan-cli/.
+# Downloaded release archives; source is kept unpacked under packages/.
 *.tgz

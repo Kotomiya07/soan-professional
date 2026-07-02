@@ -4,7 +4,11 @@ import { writeMetadata } from './metadata.js';
 import { readCliOptions } from './options.js';
 import { assertOutputWritable, ensureParentDirectory, writeImageBuffer } from './output.js';
 import { generateImage, soanConfigFromOptions } from './render.js';
-import { downloadChukoDictionary } from './dictionary.js';
+import {
+  chukoDictionaryPathFromParentDirectory,
+  defaultDictionaryParentDirectory,
+  downloadChukoDictionary,
+} from './dictionary.js';
 import type {
   CliOptions,
   GenerationMetadata,
@@ -14,11 +18,6 @@ import type {
 import { tryInjectXmpMetadata } from './xmp.js';
 import { analyzeWithMecab } from './mecab.js';
 import { parseArgs } from 'node:util';
-import { join, resolve } from 'node:path';
-
-function dictionaryPathFromOutput(outputDirectory: string): string {
-  return join(resolve(outputDirectory), 'unidic-chuko-v202512');
-}
 
 function printDictionaryHelp(): void {
   console.log(`soan dict
@@ -34,7 +33,7 @@ Commands:
   path     Print the expected Chuko-Wabun UniDic directory path.
 
 Options:
-  -o, --output <dir>  Parent directory. Default: ./dictionaries
+  -o, --output <dir>  Parent directory. Default: ${defaultDictionaryParentDirectory()}
       --force         Replace an existing unidic-chuko-v202512 directory.
       --help          Print this help.
 `);
@@ -121,14 +120,14 @@ async function main(): Promise<void> {
     const { values } = parseArgs({
       args,
       options: {
-        output: { type: 'string', short: 'o', default: 'dictionaries' },
+        output: { type: 'string', short: 'o', default: defaultDictionaryParentDirectory() },
         force: { type: 'boolean', default: false },
       },
       allowPositionals: false,
     });
 
     if (command === 'path') {
-      console.log(dictionaryPathFromOutput(values.output));
+      console.log(chukoDictionaryPathFromParentDirectory(values.output));
       return;
     }
 

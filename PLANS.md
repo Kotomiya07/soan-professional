@@ -11,19 +11,19 @@ Professional版の全量移植は本計画上43日規模のため、最初の縦
 - `--seed` により Soan の `Math.random` 依存部分をレンダリング中だけ deterministic 化
 - `--gamma` による出力画像のガンマ補正
 - `--metadata-output` による再現性 sidecar JSON 出力
-- `canvas` native build を避けるため、ローカル `package/soan/soan.cjs` を `@napi-rs/canvas` に差し替え
+- `canvas` native build を避けるため、ローカル `packages/legacy-soan/soan/soan.cjs` を `@napi-rs/canvas` に差し替え
 
 検証済み:
 - `pixi run test`: 6 tests passed
 - `pixi run build`: TypeScript build passed
-- `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成
+- `pixi run smoke`: `packages/cli/tmp/smoke.jpg` と `packages/cli/tmp/smoke.json` を生成
 
 ## 2026-06-29 v1.2.0 CLI公開候補メモ
 
 oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pro 記法が metadata 記録のみでレンダリングに効かないこと、実選択 glyph ID が metadata にないこと、package が private / pre-release のままであること、`any` 型が残ることだと指摘された。
 
 改善済み:
-- `package/soan/soan.min.js` の互換レイヤーへ Pro option を通し、`［字母］` は候補 jibo filter、`［ID］` は URL ID 直接選択としてレンダリングへ反映
+- `packages/legacy-soan/soan/soan.min.js` の互換レイヤーへ Pro option を通し、`［字母］` は候補 jibo filter、`［ID］` は URL ID 直接選択としてレンダリングへ反映
 - `/` 境界は kuromoji 後の bunsetsu 配列を手動分割し、`かな` と `か/な` で連綿選択が変わることを smoke で確認
 - `selectedGlyphs` metadata を追加し、選択 glyph URL・位置・jibo・URLから抽出できる glyph ID を記録
 - `soan-professional-cli@1.2.0` として package metadata を更新し、`soan` / `soan-cli` / `soan-pro` bin を公開
@@ -35,16 +35,16 @@ oracle（`soan-v2-completion-audit`）から、公開レベルの blocker は Pr
 - `--old-japanese` / `--kobun` を古文表記保持モードとして追加。kuromoji の読み変換を避け、原文表記と `/` 手動境界を使って既存 renderer に渡す
 - `soan dict install --output <dir>` を追加。GitHub Release asset を取得し、固定 SHA-256 と tar path safety を検証してから中古和文 UniDic を展開する。`soan dict update` は再取得、`soan dict path` は辞書パス確認に使う
 - `［ID］` はロード済み dataset の `data` 全体からも逆引きし、本文に同じ文字が出ていない ID でも選択できるようにした
-- `soan-cli/src`, `soan-cli/test`, `package/soan/soan.d.ts` から明示的な `any` 型を除去
+- `packages/cli/src`, `packages/cli/test`, `packages/legacy-soan/soan/soan.d.ts` から明示的な `any` 型を除去
 
 検証済み:
 - `pixi run test`: 8 tests passed
 - `pixi run build`: TypeScript build passed
-- `pixi run smoke`: `soan-cli/tmp/smoke.jpg` と `soan-cli/tmp/smoke.json` を生成し、`15338` ID 指示が選択 glyph に反映
+- `pixi run smoke`: `packages/cli/tmp/smoke.jpg` と `packages/cli/tmp/smoke.json` を生成し、`15338` ID 指示が選択 glyph に反映
 - `node dist/cli.js --text 'か［加］/な' ...`: jibo `加` と slash 境界の反映を metadata で確認
 - `node dist/cli.js --text 'かな'` と `node dist/cli.js --text 'か/な'`: 境界なしは `かな` 連綿、境界ありは `か` / `な` 単字に分割されることを確認
 - `node dist/cli.js dict install --output <tmp>`: release asset の download、SHA-256 検証、展開、既存辞書の `--force` なし拒否を確認
-- `npm --prefix soan-cli audit --omit=dev`: production dependency vulnerabilities 0
+- `npm --prefix packages/cli audit --omit=dev`: production dependency vulnerabilities 0
 - `npm --cache ./tmp/npm-cache pack --dry-run`: tarball contents and bundled `soan` dependency checked
 - packed tarball を `/private/tmp/soan-pack-test.*` へ install し、`npx soan --version` と `npx soan --text 'か［加］/な' ...` が成功、metadata の先頭 glyph が jibo `加` になることを確認
 - `node dist/cli.js --text 'いろはにほへとちりぬるを' --num-lines 3 --char-spacing 20 --line-spacing 30 ...`: `selectedGlyphs` の softLine が 3 本になり、画像サイズ・組版設定が sidecar に記録されることを確認
@@ -70,14 +70,14 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 - JPEG 生成時は upstream Soan XMP を使わず、CLI の Professional XMP を単一 APP1 packet として注入するようにした
 - `--force` なしでは image だけでなく sidecar metadata も既存ファイルを上書きしない
 - 古い `soan-cli/soan-cli.js` を削除し、TypeScript CLI に一本化
-- `package/soan/soan.d.ts` に Professional option と render result の型契約を追加
+- `packages/legacy-soan/soan/soan.d.ts` に Professional option と render result の型契約を追加
 - `npm run test:e2e` を追加し、Pro jibo / ID / slash boundary / kobun / layout / JPEG XMP / PNG sidecar / stdout / force保護 / deterministic bytes を自動検証
 
 現時点の制限:
 - Pro glyph 指示があるレンダリングでは位置指定を成立させるため、その実行に限って `renmenPriority` を 0 にする
 - `［ID］` は設定済み dataset と同梱 fallback 画像から解決する。未指定 dataset をネットワーク探索する汎用 global registry は持たない
 - sidecar JSON が canonical metadata。JPEG XMP は同じ metadata packet の埋め込みを行うが、PNG は sidecar のみ
-- `--old-japanese` は MeCab/中古和文 UniDic を利用する。辞書はローカル開発時 `dictionaries/unidic-chuko-v202512`、配布先では `--mecab-dic` で指定する
+- `--old-japanese` は MeCab/中古和文 UniDic を利用する。辞書はローカル開発時 `assets/dictionaries/unidic-chuko-v202512`、配布先では `soan dict install` または `--mecab-dic` で指定する
 - PixiJS インタラクティブ編集は CLI package の範囲外
 
 辞書配布:
@@ -87,7 +87,7 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 
 ## 2026-06-30 Professional残機能移植メモ
 
-ユーザー提供の `unidic-chuko-v202512` を `dictionaries/unidic-chuko-v202512` へ移動し、Nix の `mecab` と組み合わせて利用する構成にした。PixiJS編集UI以外の残件として MeCab / 中古和文 UniDic、page layout / manual positioning、demo / core monorepo を実装した。
+ユーザー提供の `unidic-chuko-v202512` を `assets/dictionaries/unidic-chuko-v202512` へ移動し、Nix の `mecab` と組み合わせて利用する構成にした。PixiJS編集UI以外の残件として MeCab / 中古和文 UniDic、page layout / manual positioning、demo / core monorepo を実装した。
 
 改善済み:
 - `--old-japanese` / `--kobun` は `mecab -d <dict> -O unidic` を呼び、解析 token を metadata と renderer に渡す
@@ -99,6 +99,37 @@ sub-agent 2本と oracle（`soan-professional-completion-audit`）で current-st
 - `packages/core` を追加し、page layout / manual positioning / morphology token の renderer-independent core contract を分離
 - `packages/demo` を追加し、PixiJSではない静的CLI demoを提供
 - `pixi run check` は core build と Nix MeCab shell 内の e2e を含む
+
+## 2026-07-02 monorepo構成整理メモ
+
+他AIの構成レビューを踏まえて、現状の「root直下の `soan-cli` と `package`、monorepo配下の `packages/core` / `packages/demo` が混在する」状態を確認した。結論として、公開単位をすべて `packages/` に寄せる提案は妥当。ただし core / renderer の大規模再分割は現時点の動作範囲に対して過剰なので、まず package boundary が曖昧な箇所だけを移動した。
+
+判断:
+- `soan-cli` は npm package 本体なので `packages/cli` へ移す
+- 既存 Soan v1.1.0 互換コードの `package` は役割が名前から分からないため `packages/legacy-soan` へ移す
+- local dataset / dictionary は npm package と混ざらないよう `assets/datasets` と `assets/dictionaries` へ寄せる
+- `packages/core` と `packages/demo` は既存の責務が明確なので維持する
+
+改善済み:
+- root `package.json` の workspaces を `packages/*` に統一
+- `pixi.toml`, GitHub Actions, package scripts, e2e, package-lock の参照を新パスへ更新
+- CLI package の `repository.directory` と local `soan` dependency を `packages/cli` / `packages/legacy-soan` に更新
+- legacy Soan の dependency fallback `createRequire` を移動後の CLI package へ向け直した
+- 大容量の local dataset / dictionary を `assets/` 配下へ移し、`.gitignore` と README のディレクトリ説明を更新
+
+改善過程:
+1. 実 tree、root/package 設定、CI、`PLANS.md`、未コミット差分を確認した
+2. 既存変更を保持したまま `git mv` で CLI package を移動した
+3. Git index lock を避けるため legacy package は単独で移動し直した
+4. 参照更新後に `rg` で旧パスの残存と npm badge の置換副作用を確認し、必要箇所を修正した
+5. 移動後の e2e / smoke で `@napi-rs/canvas` の Image/Canvas 型不一致を検出し、legacy 互換層の dependency 解決を CLI package 優先に変更した
+
+検証済み:
+- `npm --prefix packages/cli install`: local `soan` link を `packages/legacy-soan` へ更新
+- `npm --prefix packages/cli exec tsc -- -p packages/core/tsconfig.json`: core contracts build passed
+- `npm --prefix packages/cli run check`: format / lint / typecheck / unit test / build / Nix MeCab e2e / smoke passed
+- `nix shell nixpkgs#mecab -c bash -lc 'SOAN_MECAB_COMMAND="$(command -v mecab)" npm --prefix packages/cli run test:e2e'`: `assets/dictionaries/unidic-chuko-v202512` を使う e2e passed
+- `npm pack --dry-run` in `packages/cli`: tarball contents include bundled `vendor/soan`; generated pack artifacts were removed afterward
 
 ## 概要
 

@@ -3,7 +3,7 @@ import { cpSync, existsSync, readFileSync, renameSync, rmSync, writeFileSync } f
 const packageJsonPath = new URL('../package.json', import.meta.url);
 const backupPath = new URL('../package.json.pack-backup', import.meta.url);
 const vendorSoanPath = new URL('../vendor/soan', import.meta.url);
-const localSoanPath = new URL('../../package', import.meta.url);
+const localSoanPath = new URL('../../legacy-soan', import.meta.url);
 const mode = process.argv[2];
 
 function readPackageJson() {

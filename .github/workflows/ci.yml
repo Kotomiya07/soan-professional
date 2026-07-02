@@ -22,7 +22,7 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: soan-cli/package-lock.json
+          cache-dependency-path: packages/cli/package-lock.json
 
       - name: Install MeCab
         run: |
@@ -30,69 +30,69 @@ jobs:
           sudo apt-get install -y mecab
 
       - name: Install npm dependencies
-        run: npm --prefix soan-cli ci
+        run: npm --prefix packages/cli ci
 
       - name: Build core contracts
-        run: npm --prefix soan-cli exec tsc -- -p packages/core/tsconfig.json
+        run: npm --prefix packages/cli exec tsc -- -p packages/core/tsconfig.json
 
       - name: Check formatting
-        run: npm --prefix soan-cli run format:check
+        run: npm --prefix packages/cli run format:check
 
       - name: Run linter
-        run: npm --prefix soan-cli run lint
+        run: npm --prefix packages/cli run lint
 
       - name: Run typecheck
-        run: npm --prefix soan-cli run typecheck
+        run: npm --prefix packages/cli run typecheck
 
       - name: Run unit tests
-        run: npm --prefix soan-cli test
+        run: npm --prefix packages/cli test
 
       - name: Build CLI
-        run: npm --prefix soan-cli run build
+        run: npm --prefix packages/cli run build
 
       - name: Download Chuko-Wabun UniDic
-        run: node soan-cli/dist/cli.js dict install --output dictionaries
+        run: node packages/cli/dist/cli.js dict install --output assets/dictionaries
 
       - name: Run CLI e2e
         env:
-          SOAN_MECAB_DIC: ${{ github.workspace }}/dictionaries/unidic-chuko-v202512
-        run: npm --prefix soan-cli run test:e2e
+          SOAN_MECAB_DIC: ${{ github.workspace }}/assets/dictionaries/unidic-chuko-v202512
+        run: npm --prefix packages/cli run test:e2e
 
       - name: Run smoke
-        run: npm --prefix soan-cli run smoke
+        run: npm --prefix packages/cli run smoke
 
       - name: Audit dependencies
-        run: npm --prefix soan-cli audit
+        run: npm --prefix packages/cli audit
 
       - name: Check explicit any usage
         run: |
-          ! grep -RInE '\bany\b' soan-cli/src soan-cli/test package/soan/soan.d.ts packages/core/src
+          ! grep -RInE '\bany\b' packages/cli/src packages/cli/test packages/legacy-soan/soan/soan.d.ts packages/core/src
 
       - name: Pack dry run
-        working-directory: soan-cli
+        working-directory: packages/cli
         run: npm pack --dry-run
 
       - name: Packed install smoke
         shell: bash
         run: |
           set -euo pipefail
-          packfile="$(cd soan-cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
+          packfile="$(cd packages/cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
           tmpdir="$(mktemp -d)"
-          version="$(node -p "require('./soan-cli/package.json').version")"
+          version="$(node -p "require('./packages/cli/package.json').version")"
           npm --prefix "$tmpdir" install -g "$RUNNER_TEMP/$packfile"
           PATH="$tmpdir/bin:$PATH"
           soan --version | grep "^${version}$"
           soan-cli --version | grep "^${version}$"
           soan-pro --version | grep "^${version}$"
           soan --text 'か［加］/な' --seed 7 --generated-at 2026-06-29T00:00:00.000Z --output "$tmpdir/jibo.jpg" --metadata-output "$tmpdir/jibo.json" --force
-          soan --text 'けふ/こそ' --kobun --mecab-dic "${{ github.workspace }}/dictionaries/unidic-chuko-v202512" --seed 3 --generated-at 2026-06-29T00:00:00.000Z --page-width 640 --page-height 960 --manual-positions '[{"position":0,"offsetX":14,"offsetY":-6}]' --output "$tmpdir/kobun.jpg" --metadata-output "$tmpdir/kobun.json" --force
+          soan --text 'けふ/こそ' --kobun --mecab-dic "${{ github.workspace }}/assets/dictionaries/unidic-chuko-v202512" --seed 3 --generated-at 2026-06-29T00:00:00.000Z --page-width 640 --page-height 960 --manual-positions '[{"position":0,"offsetX":14,"offsetY":-6}]' --output "$tmpdir/kobun.jpg" --metadata-output "$tmpdir/kobun.json" --force
           node -e "const fs=require('fs'); const j=JSON.parse(fs.readFileSync(process.argv[1],'utf8')); const k=JSON.parse(fs.readFileSync(process.argv[2],'utf8')); if(j.selectedGlyphs[0].jibo!=='加') process.exit(1); if(k.soanConfig.morphologyEngine!=='mecab-unidic-chuko') process.exit(2); if(k.soanConfig.pageWidth!==640 || k.manualPositions[0].offsetX!==14) process.exit(3);" "$tmpdir/jibo.json" "$tmpdir/kobun.json"
 
       - name: Published registry install smoke
         shell: bash
         run: |
           set -euo pipefail
-          version="$(node -p "require('./soan-cli/package.json').version")"
+          version="$(node -p "require('./packages/cli/package.json').version")"
           if ! npm view "soan-professional-cli@${version}" version >/dev/null 2>&1; then
             echo "soan-professional-cli@${version} is not published yet; skipping registry install smoke."
             exit 0
@@ -125,20 +125,20 @@ jobs:
         with:
           node-version: '20'
           cache: npm
-          cache-dependency-path: soan-cli/package-lock.json
+          cache-dependency-path: packages/cli/package-lock.json
 
       - name: Install npm dependencies
-        run: npm --prefix soan-cli ci
+        run: npm --prefix packages/cli ci
 
       - name: Build CLI
-        run: npm --prefix soan-cli run build
+        run: npm --prefix packages/cli run build
 
       - name: Packed global install smoke
         shell: bash
         run: |
           set -euo pipefail
-          version="$(node -p "require('./soan-cli/package.json').version")"
-          packfile="$(cd soan-cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
+          version="$(node -p "require('./packages/cli/package.json').version")"
+          packfile="$(cd packages/cli && npm pack --pack-destination "$RUNNER_TEMP" --silent)"
           tmpdir="$(mktemp -d)"
           npm --prefix "$tmpdir" install -g "$RUNNER_TEMP/$packfile"
           if [ -d "$tmpdir/bin" ]; then

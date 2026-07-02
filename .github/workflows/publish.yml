@@ -25,10 +25,10 @@ jobs:
           node-version: '24'
           registry-url: https://registry.npmjs.org
           cache: npm
-          cache-dependency-path: soan-cli/package-lock.json
+          cache-dependency-path: packages/cli/package-lock.json
 
       - name: Install dependencies
-        run: npm --prefix soan-cli ci
+        run: npm --prefix packages/cli ci
 
       - name: Install MeCab
         run: |
@@ -36,49 +36,49 @@ jobs:
           sudo apt-get install -y mecab
 
       - name: Build package
-        run: npm --prefix soan-cli run build
+        run: npm --prefix packages/cli run build
 
       - name: Download Chuko-Wabun UniDic
-        run: node soan-cli/dist/cli.js dict install --output dictionaries
+        run: node packages/cli/dist/cli.js dict install --output assets/dictionaries
 
       - name: Check formatting
-        run: npm --prefix soan-cli run format:check
+        run: npm --prefix packages/cli run format:check
 
       - name: Run linter
-        run: npm --prefix soan-cli run lint
+        run: npm --prefix packages/cli run lint
 
       - name: Run typecheck
-        run: npm --prefix soan-cli run typecheck
+        run: npm --prefix packages/cli run typecheck
 
       - name: Run unit tests
-        run: npm --prefix soan-cli test
+        run: npm --prefix packages/cli test
 
       - name: Run CLI e2e
         env:
-          SOAN_MECAB_DIC: ${{ github.workspace }}/dictionaries/unidic-chuko-v202512
-        run: npm --prefix soan-cli run test:e2e
+          SOAN_MECAB_DIC: ${{ github.workspace }}/assets/dictionaries/unidic-chuko-v202512
+        run: npm --prefix packages/cli run test:e2e
 
       - name: Run smoke
-        run: npm --prefix soan-cli run smoke
+        run: npm --prefix packages/cli run smoke
 
       - name: Audit dependencies
-        run: npm --prefix soan-cli audit
+        run: npm --prefix packages/cli audit
 
       - name: Check tag matches package version
         if: ${{ github.event_name == 'push' }}
         run: |
-          version="$(node -p "require('./soan-cli/package.json').version")"
+          version="$(node -p "require('./packages/cli/package.json').version")"
           test "${GITHUB_REF_NAME}" = "v${version}"
 
       - name: Verify package contents
-        working-directory: soan-cli
+        working-directory: packages/cli
         run: npm pack --dry-run
 
       - name: Check npm package version
         if: ${{ github.event_name == 'push' }}
         id: npmjs
         run: |
-          version="$(node -p "require('./soan-cli/package.json').version")"
+          version="$(node -p "require('./packages/cli/package.json').version")"
           if npm view "soan-professional-cli@${version}" version >/dev/null 2>&1; then
             echo "published=true" >> "$GITHUB_OUTPUT"
           else
@@ -91,7 +91,7 @@ jobs:
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
-          version="$(node -p "require('./soan-cli/package.json').version")"
+          version="$(node -p "require('./packages/cli/package.json').version")"
           {
             echo '@kotomiya07:registry=https://npm.pkg.github.com'
             echo "//npm.pkg.github.com/:_authToken=${NODE_AUTH_TOKEN}"
@@ -104,12 +104,12 @@ jobs:
 
       - name: Publish dry run
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        working-directory: soan-cli
+        working-directory: packages/cli
         run: npm publish --access public --dry-run
 
       - name: Publish GitHub Packages dry run
         if: ${{ github.event_name == 'workflow_dispatch' }}
-        working-directory: soan-cli
+        working-directory: packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |
@@ -123,7 +123,7 @@ jobs:
 
       - name: Publish to npm
         if: ${{ github.event_name == 'push' && steps.npmjs.outputs.published != 'true' }}
-        working-directory: soan-cli
+        working-directory: packages/cli
         run: npm publish --access public --provenance
 
       - name: Verify npm registry install
@@ -131,7 +131,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          version="$(node -p "require('./soan-cli/package.json').version")"
+          version="$(node -p "require('./packages/cli/package.json').version")"
           tmpdir="$(mktemp -d)"
           for attempt in 1 2 3 4 5; do
             if npm --prefix "$tmpdir" install -g "soan-professional-cli@${version}"; then
@@ -151,7 +151,7 @@ jobs:
 
       - name: Publish to GitHub Packages
         if: ${{ github.event_name == 'push' && steps.github_packages.outputs.published != 'true' }}
-        working-directory: soan-cli
+        working-directory: packages/cli
         env:
           NODE_AUTH_TOKEN: ${{ github.token }}
         run: |

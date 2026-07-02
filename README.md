@@ -53,12 +53,12 @@ The package provides three equivalent command names:
 The dictionary is distributed as a separate GitHub Release asset and is not bundled into the npm package. Chuko-Wabun UniDic is licensed under CC BY-NC-SA 4.0, separately from this CLI package's MIT license. Keep the non-commercial/share-alike terms and the attribution shown in `unidic-chuko-v202512/README.md`.
 
 ```bash
-soan dict install --output ./dictionaries
-export SOAN_MECAB_DIC="$PWD/dictionaries/unidic-chuko-v202512"
+soan dict install
+soan dict path
 ```
 
 The command downloads the release asset, verifies the pinned SHA-256, checks the archive paths, and extracts the dictionary.
-Use `soan dict update --output ./dictionaries` to replace the local copy with the pinned release, and `soan dict path --output ./dictionaries` to print the dictionary path for scripts.
+By default, the dictionary is installed under the user data directory (`~/Library/Application Support/soan-professional/dictionaries` on macOS, `${XDG_DATA_HOME:-~/.local/share}/soan-professional/dictionaries` on Linux, and `%LOCALAPPDATA%\soan-professional\dictionaries` on Windows). Use `soan dict update` to replace the local copy with the pinned release, and `soan dict path` to print the dictionary path for scripts. `--output <dir>` remains available when you need a project-local or CI-specific dictionary parent directory.
 
 Use it with `--kobun` or `--old-japanese`:
 
@@ -66,7 +66,6 @@ Use it with `--kobun` or `--old-japanese`:
 soan \
   --text "けふ/こそ" \
   --kobun \
-  --mecab-dic ./dictionaries/unidic-chuko-v202512 \
   --seed 5 \
   --output ./kobun.jpg \
   --metadata-output ./kobun.json \
@@ -81,6 +80,7 @@ soan \
 - Byte-level reproducible JPEG output when `--generated-at` is fixed
 - Gamma correction with `--gamma`
 - Layout controls: `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, and `--page-height`
+- Forced page sizes keep the rendered layout aligned to the top-right of the page.
 - Manual glyph offsets with `--manual-positions`
 - Chuko-Wabun UniDic analysis with `--old-japanese` / `--kobun`
 - Canonical sidecar metadata with `--metadata-output`
@@ -100,13 +100,13 @@ Run the local verification suite from the repository root:
 
 ```bash
 pixi run check
-npm --prefix soan-cli audit
+npm --prefix packages/cli audit
 ```
 
 Useful release checks:
 
 ```bash
-cd soan-cli
+cd packages/cli
 npm run test:e2e
 npm pack --dry-run
 npm publish --access public --dry-run
@@ -116,11 +116,12 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 ## Repository Layout
 
-- `soan-cli/`: npm package source
+- `packages/cli/`: npm package source
 - `packages/core/`: renderer-independent contracts used by repository validation
 - `packages/demo/`: static non-Pixi CLI demo
-- `package/`: bundled Soan v1.1.0 compatibility dependency
-- `dictionaries/`: local development dictionary location, not included in the npm tarball
+- `packages/legacy-soan/`: bundled Soan v1.1.0 compatibility dependency
+- `assets/datasets/`: optional local source datasets, kept out of git and npm packages
+- `assets/dictionaries/`: optional local development dictionaries, kept out of git and npm packages
 - `PLANS.md`: migration plan and validation notes
 
 ## Scope Notes

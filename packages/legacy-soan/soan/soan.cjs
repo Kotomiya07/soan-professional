@@ -11,13 +11,13 @@
 const path = require('path');
 const { createRequire } = require('module');
 
-const cliRequire = createRequire(path.resolve(__dirname, '../../soan-cli/package.json'));
+const cliRequire = createRequire(path.resolve(__dirname, '../../cli/package.json'));
 const requireDependency = function(name) {
     try {
-        return require(name);
+        return cliRequire(name);
     } catch(e) {
         if (e && e.code === 'MODULE_NOT_FOUND') {
-            return cliRequire(name);
+            return require(name);
         }
         throw e;
     }

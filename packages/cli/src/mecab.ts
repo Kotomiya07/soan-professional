@@ -1,22 +1,12 @@
 import { accessSync, constants } from 'node:fs';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { spawn } from 'node:child_process';
-import { fileURLToPath } from 'node:url';
 import type { MorphologyToken } from './types.js';
+export { defaultChukoDictionaryPath } from './dictionary.js';
 
 export interface MecabOptions {
   readonly command: string;
   readonly dictionaryPath: string;
-}
-
-export function defaultChukoDictionaryPath(): string {
-  return resolve(
-    dirname(fileURLToPath(import.meta.url)),
-    '..',
-    '..',
-    'dictionaries',
-    'unidic-chuko-v202512',
-  );
 }
 
 export function isReadableDictionary(path: string): boolean {
