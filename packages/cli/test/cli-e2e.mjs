@@ -207,6 +207,70 @@ run([
   '--force',
 ]);
 
+const autoSeedResult = run([
+  '--text',
+  'か',
+  '--generated-at',
+  '2026-06-29T00:00:00.000Z',
+  '--print-image-text',
+  '--output',
+  join(workdir, 'auto-seed.jpg'),
+  '--metadata-output',
+  join(workdir, 'auto-seed.json'),
+  '--force',
+]);
+assert(/Seed: -?\d+/.test(autoSeedResult.stderr), 'auto-generated seed was not reported on stderr');
+assert(
+  autoSeedResult.stderr.includes('Image text: '),
+  '--print-image-text did not print the image text',
+);
+
+const bothTextResult = spawnSync(process.execPath, [cli, '--text', 'か', '--sample-text'], {
+  cwd: repoRoot,
+  encoding: 'utf8',
+});
+assert(bothTextResult.status !== 0, 'combining --text and --sample-text should fail');
+
+run([
+  '--text',
+  'いろはにほへと',
+  '--seed',
+  '9',
+  '--border',
+  '--center-page',
+  '--page-width',
+  '800',
+  '--page-height',
+  '1200',
+  '--num-lines',
+  '2',
+  '--generated-at',
+  '2026-06-29T00:00:00.000Z',
+  '--output',
+  join(workdir, 'center-border.png'),
+  '--format',
+  'png',
+  '--metadata-output',
+  join(workdir, 'center-border.json'),
+  '--force',
+]);
+
+run([
+  '--text',
+  'か',
+  '--seed',
+  '13',
+  '--layout',
+  'v1.1',
+  '--generated-at',
+  '2026-06-29T00:00:00.000Z',
+  '--output',
+  join(workdir, 'layout-v11.jpg'),
+  '--metadata-output',
+  join(workdir, 'layout-v11.json'),
+  '--force',
+]);
+
 for (const name of ['deterministic-a', 'deterministic-b']) {
   run([
     '--text',
@@ -254,6 +318,9 @@ run([
 ]);
 
 const plain = readJson('plain.json');
+const autoSeed = readJson('auto-seed.json');
+const centerBorder = readJson('center-border.json');
+const layoutV11 = readJson('layout-v11.json');
 const boundary = readJson('boundary.json');
 const jibo = readJson('jibo-xmp.json');
 const id = readJson('id.json');
@@ -311,6 +378,30 @@ assert(
   sha256('deterministic-a.jpg') === sha256('deterministic-b.jpg'),
   'same seed and generatedAt did not produce identical JPEG bytes',
 );
+assert(
+  Number.isInteger(autoSeed.seed) && autoSeed.seedGenerated === true,
+  'auto-generated seed was not recorded in metadata',
+);
+assert(
+  typeof autoSeed.imageText === 'string' && autoSeed.imageText.length > 0,
+  'image text was not recorded in metadata',
+);
+assert(
+  centerBorder.soanConfig.border === true && centerBorder.soanConfig.centerPage === true,
+  'border / centerPage options were not recorded',
+);
+assert(
+  centerBorder.image.width === 800 && centerBorder.image.height === 1200,
+  'centered page dimensions were not applied',
+);
+assert(
+  layoutV11.layout.version === 'v1.1' && layoutV11.layout.attempts === 1,
+  'layout v1.1 did not run as a single attempt',
+);
+assert(
+  plain.layout.version === 'v1.2' && plain.layout.chosenSeed !== undefined,
+  'layout v1.2 metadata was not recorded',
+);
 
 for (const name of [
   'plain.jpg',
@@ -319,6 +410,9 @@ for (const name of [
   'id.png',
   'kobun.jpg',
   'layout.jpg',
+  'auto-seed.jpg',
+  'center-border.png',
+  'layout-v11.jpg',
 ]) {
   assert(statSync(join(workdir, name)).size > 0, `${name} is empty`);
 }
@@ -326,6 +420,19 @@ for (const name of [
 console.log(
   JSON.stringify({
     workdir,
-    checked: ['jibo', 'id', 'slash', 'kobun', 'layout', 'xmp', 'png', 'deterministic-bytes'],
+    checked: [
+      'jibo',
+      'id',
+      'slash',
+      'kobun',
+      'layout',
+      'xmp',
+      'png',
+      'deterministic-bytes',
+      'auto-seed',
+      'image-text',
+      'border-center',
+      'layout-versions',
+    ],
   }),
 );

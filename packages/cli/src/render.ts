@@ -1,14 +1,17 @@
 import { createRequire } from 'node:module';
 import { createCanvas, loadImage } from '@napi-rs/canvas';
 import { applyGammaToRgba } from './gamma.js';
+import { countSoftLines, deriveAttemptSeed, measureTrailingGap } from './layout.js';
 import { withSeededMathRandom } from './prng.js';
 import type {
   CanvasLike,
   CliOptions,
   GenerationMetadata,
+  LayoutMetadata,
   SoanFactory,
   SoanInstance,
   SoanRenderOptions,
+  SoanRenderResult,
 } from './types.js';
 
 const require = createRequire(import.meta.url);
@@ -45,6 +48,8 @@ function soanConfigFromOptions(options: CliOptions) {
     lineSpacing: options.lineSpacing,
     morphologyMode: options.morphologyMode,
     morphologyEngine: options.morphologyEngine,
+    border: options.border,
+    centerPage: options.centerPage,
     mecabDictionaryPath: options.mecabDictionaryPath,
     fontFamily: options.fontFamily,
     fontColor: options.fontColor,
@@ -101,20 +106,88 @@ export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): Soa
     professionalMorphologyTokens: metadata.morphologyTokens,
     pageWidth: metadata.soanConfig.pageWidth,
     pageHeight: metadata.soanConfig.pageHeight,
+    border: metadata.soanConfig.border,
+    centerPage: metadata.soanConfig.centerPage,
     manualPositions: metadata.manualPositions,
     professionalDirectives: metadata.directives,
     professionalBoundaries: metadata.boundaries,
   };
 }
 
-async function renderWithSoan(
-  soan: SoanInstance,
-  metadata: GenerationMetadata,
-  seed: number | undefined,
-) {
+async function renderWithSoan(soan: SoanInstance, metadata: GenerationMetadata, seed: number) {
   return withSeededMathRandom(seed, () =>
     soan.getTextImageFromTextPromise(metadata.renderText, soanRenderOptionsFromMetadata(metadata)),
   );
+}
+
+interface LayoutAttempt {
+  readonly attempt: number;
+  readonly seed: number;
+  readonly renderResult: SoanRenderResult;
+  readonly trailingGap: number;
+  readonly softLines: number;
+}
+
+/**
+ * v1.2 typesetting: retry deterministic seed-derived glyph combinations and
+ * keep the attempt with the smallest trailing line gap. Attempt 0 uses the
+ * base seed, so --layout v1.1 (single attempt) reproduces historical output.
+ */
+async function renderBestLayout(
+  soan: SoanInstance,
+  metadata: GenerationMetadata,
+  options: CliOptions,
+): Promise<{ best: LayoutAttempt; attemptsRun: number }> {
+  const maxAttempts = options.layoutVersion === 'v1.2' ? options.layoutAttempts : 1;
+  let best: LayoutAttempt | undefined;
+  let attemptsRun = 0;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
+    attemptsRun = attempt + 1;
+    const seed = deriveAttemptSeed(options.seed, attempt);
+    const renderResult = await renderWithSoan(soan, metadata, seed);
+    const candidate: LayoutAttempt = {
+      attempt,
+      seed,
+      renderResult,
+      trailingGap: measureTrailingGap(renderResult.result),
+      softLines: countSoftLines(renderResult.result),
+    };
+
+    if (best === undefined || isBetterLayout(candidate, best, options.numLines)) {
+      best = candidate;
+    }
+
+    const satisfiesNumLines =
+      options.numLines === undefined || candidate.softLines === options.numLines;
+    if (candidate.trailingGap === 0 && satisfiesNumLines) {
+      break;
+    }
+    if (candidate.softLines <= 1 && options.numLines === undefined) {
+      // A single-line layout has no trailing line gap to reduce.
+      break;
+    }
+  }
+
+  if (best === undefined) {
+    throw new Error('Layout rendering produced no attempts');
+  }
+  return { best, attemptsRun };
+}
+
+function isBetterLayout(
+  candidate: LayoutAttempt,
+  best: LayoutAttempt,
+  numLines: number | undefined,
+): boolean {
+  if (numLines !== undefined) {
+    const candidateSatisfies = candidate.softLines === numLines;
+    const bestSatisfies = best.softLines === numLines;
+    if (candidateSatisfies !== bestSatisfies) {
+      return candidateSatisfies;
+    }
+  }
+  return candidate.trailingGap < best.trailingGap;
 }
 
 function createSoanQuietly(options: CliOptions): SoanInstance | undefined {
@@ -140,6 +213,7 @@ export interface GeneratedImage {
   readonly buffer: Buffer;
   readonly renderedGlyphs: GenerationMetadata['renderedGlyphs'];
   readonly image: GenerationMetadata['image'];
+  readonly layout: LayoutMetadata;
 }
 
 export async function generateImage(
@@ -151,7 +225,8 @@ export async function generateImage(
     throw new Error('Failed to initialize Soan');
   }
 
-  const renderResult = await renderWithSoan(soan, metadata, options.seed);
+  const { best: bestAttempt, attemptsRun } = await renderBestLayout(soan, metadata, options);
+  const renderResult = bestAttempt.renderResult;
   const canvas = renderResult.opt.canvas;
 
   // The CLI owns Professional metadata injection after rendering. Encoding
@@ -165,6 +240,13 @@ export async function generateImage(
     image: {
       width: canvas.width ?? 0,
       height: canvas.height ?? 0,
+    },
+    layout: {
+      version: options.layoutVersion,
+      attempts: attemptsRun,
+      chosenAttempt: bestAttempt.attempt,
+      chosenSeed: bestAttempt.seed,
+      trailingGap: bestAttempt.trailingGap,
     },
   };
 }

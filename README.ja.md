@@ -4,7 +4,7 @@
 [![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.2.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.3.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![English](https://img.shields.io/badge/README-English-blue)](./README.md)
@@ -74,13 +74,17 @@ soan \
 
 ## 機能
 
-- `［加］`, `［八良］`, `［ID4867］` のようなインライン置換型Pro記法
+- `［加］`, `［八良］`, `［ID4867］` のようなインライン置換型Pro記法（半角 `[]` と全角 `／` はエスケープとしてそのまま表示）
 - `/` による手動bunsetsu / renmen境界
-- `--seed` によるglyph / layout選択の再現性
+- `--seed` によるglyph / layout選択の再現性。未指定時はシード値を自動生成し、`Seed: <n>` としてstderrへ表示・metadataへ記録
 - `--generated-at` 固定時のbyte-level reproducible JPEG
 - `--gamma` によるガンマ補正
+- `--layout v1.2`（デフォルト）: 行末の空きを減らす活字組み合わせの自動再試行。`--layout v1.1` で旧ロジック、`--layout-attempts` で試行回数を制御
 - `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, `--page-height` による組版制御
-- 画像サイズを明示指定した場合、生成内容はページ右上に揃えます
+- 画像サイズを明示指定した場合、生成内容はページ右上に揃えます。`--center-page` 指定時は基本版面をページの天地左右中央に配置します
+- `--border` による活字ボーダー表示
+- `--print-image-text` による画像テキスト（生成に用いられたテキスト）の確認。metadataにも `imageText` として記録
+- `--sample-text` によるサンプルテキスト（中島敦『山月記』冒頭）の生成
 - `--manual-positions` によるglyph手動位置調整
 - `--old-japanese` / `--kobun` による中古和文UniDic解析
 - `--metadata-output` によるcanonical sidecar metadata
@@ -90,7 +94,7 @@ soan \
 
 ## メタデータ
 
-`--metadata-output` のsidecar JSONがv1.2.0のcanonical reproducibility recordです。JPEGには同じProfessional metadata JSONを単一のAPP1 XMP packetとして埋め込みます。XMPがJPEG APP1のサイズ上限を超える場合はcompact XMPを試し、それでも大きい場合はJPEGとsidecarを出力したうえで `xmp.embedded: false` と理由を記録します。
+`--metadata-output` のsidecar JSONがv1.3.0のcanonical reproducibility recordです。JPEGには同じProfessional metadata JSONを単一のAPP1 XMP packetとして埋め込みます。XMPがJPEG APP1のサイズ上限を超える場合はcompact XMPを試し、それでも大きい場合はJPEGとsidecarを出力したうえで `xmp.embedded: false` と理由を記録します。
 
 `--seed` はglyph / layout選択を再現するための値です。JPEG bytesまで固定したい場合は、XMPに入るtimestampも変化しないように `--generated-at <ISO timestamp>` を指定してください。
 
@@ -126,7 +130,7 @@ release tagの公開はGitHub Actionsで行います。publish workflowは対応
 
 ## スコープ
 
-- PixiJS interactive editingはv1.2.0 CLI packageの範囲外です。
+- PixiJS interactive editingはv1.3.0 CLI packageの範囲外です。
 - Pro glyph指示があるレンダリングでは、位置指定を曖昧にしないため、その実行に限って実効 `renmenPriority` を `0` にします。
 - `［ID］` / `［ID4867］` は設定済みdatasetと同梱fallback画像から解決します。CLIはglobal dataset registryを提供しません。
 

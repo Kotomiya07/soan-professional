@@ -9,6 +9,14 @@ function metadataFixture(): GenerationMetadata {
     sourceText: 'N［15338］/O',
     renderText: 'NO',
     seed: 42,
+    seedGenerated: false,
+    layout: {
+      version: 'v1.2',
+      attempts: 0,
+      chosenAttempt: 0,
+      chosenSeed: 42,
+      trailingGap: 0,
+    },
     gamma: 1,
     format: 'jpeg',
     directives: [{ kind: 'id', position: 0, raw: '15338', id: 15338 }],
@@ -29,6 +37,8 @@ function metadataFixture(): GenerationMetadata {
       charSpacing: 20,
       lineSpacing: 30,
       morphologyMode: 'old-japanese',
+      border: true,
+      centerPage: true,
       fontFamily: 'serif',
       fontColor: '#000000',
       scale: 1,
@@ -52,6 +62,8 @@ describe('soanRenderOptionsFromMetadata', () => {
     expect(options.charSpacing).toBe(20);
     expect(options.lineSpacing).toBe(30);
     expect(options.morphologyMode).toBe('old-japanese');
+    expect(options.border).toBe(true);
+    expect(options.centerPage).toBe(true);
     expect(options.force).toBe(true);
   });
 });

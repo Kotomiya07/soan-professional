@@ -64,6 +64,22 @@ function selectedGlyphsFromRenderedGlyphs(
   });
 }
 
+function imageTextFromSelectedGlyphs(selectedGlyphs: readonly SelectedGlyphMetadata[]): string {
+  const lines = new Map<number, string[]>();
+  for (const glyph of selectedGlyphs) {
+    const tokens = lines.get(glyph.line);
+    if (tokens === undefined) {
+      lines.set(glyph.line, [glyph.token]);
+    } else {
+      tokens.push(glyph.token);
+    }
+  }
+  return [...lines.entries()]
+    .sort((a, b) => a[0] - b[0])
+    .map(([, tokens]) => tokens.join(''))
+    .join('\n');
+}
+
 function assertNumLinesSatisfied(
   options: CliOptions,
   selectedGlyphs: readonly SelectedGlyphMetadata[],
@@ -120,7 +136,11 @@ async function main(): Promise<void> {
     const { values } = parseArgs({
       args,
       options: {
-        output: { type: 'string', short: 'o', default: defaultDictionaryParentDirectory() },
+        output: {
+          type: 'string',
+          short: 'o',
+          default: defaultDictionaryParentDirectory(),
+        },
         force: { type: 'boolean', default: false },
       },
       allowPositionals: false,
@@ -173,12 +193,23 @@ async function main(): Promise<void> {
     ...soanConfigFromOptions(effectiveOptions),
     renmenPriority: parsed.directives.length > 0 ? 0 : effectiveOptions.renmenPriority,
   };
+  // The Professional web UI displays the seed with the generated image so the
+  // same glyph combination can be reproduced. stderr keeps stdout data URLs clean.
+  console.error(`Seed: ${options.seed}`);
   const metadataBase: GenerationMetadata = {
     engine: 'soan-v1.1.0-compat',
     professionalSlice: true,
     sourceText: parsed.sourceText,
     renderText: parsed.renderText,
     seed: options.seed,
+    seedGenerated: options.seedGenerated,
+    layout: {
+      version: options.layoutVersion,
+      attempts: 0,
+      chosenAttempt: 0,
+      chosenSeed: options.seed,
+      trailingGap: 0,
+    },
     gamma: options.gamma,
     format: options.format,
     directives: parsed.directives,
@@ -198,8 +229,14 @@ async function main(): Promise<void> {
   const generated = await generateImage(effectiveOptions, metadataBase);
   const selectedGlyphs = selectedGlyphsFromRenderedGlyphs(generated.renderedGlyphs ?? []);
   assertNumLinesSatisfied(options, selectedGlyphs);
+  const imageText = imageTextFromSelectedGlyphs(selectedGlyphs);
+  if (options.printImageText) {
+    console.error(`Image text: ${imageText}`);
+  }
   const metadataWithoutXmpStatus: GenerationMetadata = {
     ...metadataBase,
+    layout: generated.layout,
+    imageText,
     renderedGlyphs: generated.renderedGlyphs,
     selectedGlyphs,
     image: generated.image,

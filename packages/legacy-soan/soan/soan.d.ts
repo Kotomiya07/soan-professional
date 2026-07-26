@@ -117,6 +117,12 @@ declare namespace Soan {
     professionalDirectives?: readonly ProDirective[];
     /** Professional: 手動形態素境界 */
     professionalBoundaries?: readonly BoundaryDirective[];
+    /** Professional: 生成画像に活字ボーダーを描画する */
+    border?: boolean;
+    /** デバッグ描画（ボーダー・基本版面ガイド） */
+    debug?: boolean;
+    /** Professional: 基本版面をページの天地左右中央に配置する */
+    centerPage?: boolean;
     /** 正常完了時のコールバック関数 */
     doneCallback?: (text: string, opt: RenderOptions, result: readonly RenderedGlyph[]) => unknown;
     /** 異常終了時のコールバック関数 */

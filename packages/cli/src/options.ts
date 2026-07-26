@@ -1,10 +1,12 @@
+import { randomInt } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { parseArgsWithHelp, usage } from 'minus-h';
-import type { CliOptions, DatasetConfig, OutputFormat } from './types.js';
+import type { CliOptions, DatasetConfig, LayoutVersion, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
 import { defaultChukoDictionaryPath } from './dictionary.js';
+import { SAMPLE_TEXT } from './sample-text.js';
 
-export const CLI_VERSION = '1.2.2';
+export const CLI_VERSION = '1.3.0';
 
 function printHelp(): void {
   console.log(`soan-professional-cli ${CLI_VERSION}
@@ -17,17 +19,25 @@ Usage:
 
 Core options:
   -t, --text <text>                 Text to render. Supports Pro notation: ［字母］, ［ID］, /
+      --sample-text                 Render the sample text (Nakajima Atsushi, "Sangetsuki").
   -o, --output <file>               Output image path. Writes a data URL to stdout when omitted.
       --metadata-output <file>      Write reproducibility metadata JSON.
       --format <jpeg|png>           Output format. Default: jpeg
       --quality <0-1>               JPEG quality. Default: 0.92
-      --seed <integer>              Deterministic rendering seed.
+      --seed <integer>              Deterministic rendering seed. Auto-generated and reported when omitted.
       --generated-at <iso>          Metadata timestamp. Fix this for byte-level reproducible XMP output.
       --gamma <0.1-2.2>             Gamma correction. Default: 1
       --chars-per-line <integer>    Characters per line. Default: 20
       --line-gap <number>           Line gap. Default: 0.5
       --renmen-priority <0-1>       Renmen priority. Default: 1
       --num-lines <integer>         Target number of vertical lines.
+      --layout <v1.1|v1.2>          Typesetting logic. v1.2 retries glyph combinations to reduce
+                                    trailing line gaps. Default: v1.2
+      --layout-attempts <1-16>      Max glyph reselection attempts for --layout v1.2. Default: 4
+      --center-page                 Center the text block on the page (use with --num-lines and
+                                    --page-width/--page-height).
+      --border                      Draw borders around rendered glyphs.
+      --print-image-text            Print the image text used for generation to stderr.
       --char-spacing <integer>      Extra character spacing in 1/100 character units.
       --line-spacing <integer>      Extra line spacing in 1/100 character units.
       --old-japanese, --kobun       Preserve historical surface text instead of modern reading conversion.
@@ -61,7 +71,7 @@ Dictionary commands:
       --output <dir>                Parent directory. Default: user data directory
       --force                       Replace an existing unidic-chuko-v202512 directory.
 
-Unsupported in v1.2.0 CLI package:
+Unsupported in v1.3.0 CLI package:
   PixiJS interactive editing.
 `);
 }
@@ -72,10 +82,26 @@ const argsConfig = {
     text: {
       type: 'string',
       short: 't',
-      description: '（必須）古活字組版画像化する文字列。Pro記法 ［字母］/［ID］ と / 境界を利用可',
+      description: '古活字組版画像化する文字列。Pro記法 ［字母］/［ID］ と / 境界を利用可',
     },
-    output: { type: 'string', short: 'o', description: '出力先ファイル名（未指定時はstdout）' },
-    metadataOutput: { type: 'string', description: '再現性メタデータJSONの出力先' },
+    sampleText: {
+      type: 'boolean',
+      default: false,
+      description: 'サンプルテキスト（中島敦『山月記』冒頭）を利用する',
+    },
+    'sample-text': {
+      type: 'boolean',
+      description: 'サンプルテキストを利用する（sampleTextの別名）',
+    },
+    output: {
+      type: 'string',
+      short: 'o',
+      description: '出力先ファイル名（未指定時はstdout）',
+    },
+    metadataOutput: {
+      type: 'string',
+      description: '再現性メタデータJSONの出力先',
+    },
     'metadata-output': {
       type: 'string',
       description: '再現性メタデータJSONの出力先（metadataOutputの別名）',
@@ -105,49 +131,153 @@ const argsConfig = {
       default: '1',
       description: '連綿活字の優先度（0:非連綿優先～1:連綿優先）',
     },
-    'renmen-priority': { type: 'string', description: '連綿活字の優先度（renmenPriorityの別名）' },
+    'renmen-priority': {
+      type: 'string',
+      description: '連綿活字の優先度（renmenPriorityの別名）',
+    },
     charsPerLine: {
       type: 'string',
       default: '20',
       description: '字詰数（0:自動的に行を折り返さない）',
     },
-    'chars-per-line': { type: 'string', description: '字詰数（charsPerLineの別名）' },
+    'chars-per-line': {
+      type: 'string',
+      description: '字詰数（charsPerLineの別名）',
+    },
     lineGap: { type: 'string', default: '0.5', description: '行間' },
     'line-gap': { type: 'string', description: '行間（lineGapの別名）' },
-    numLines: { type: 'string', description: '行数指定。指定時は本文字数から字詰数を導出する' },
+    numLines: {
+      type: 'string',
+      description: '行数指定。指定時は本文字数から字詰数を導出する',
+    },
     'num-lines': { type: 'string', description: '行数指定（numLinesの別名）' },
-    charSpacing: { type: 'string', default: '0', description: '字間微調整（1/100文字単位）' },
-    'char-spacing': { type: 'string', description: '字間微調整（charSpacingの別名）' },
-    lineSpacing: { type: 'string', default: '0', description: '行間微調整（1/100文字単位）' },
-    'line-spacing': { type: 'string', description: '行間微調整（lineSpacingの別名）' },
+    layout: {
+      type: 'string',
+      default: 'v1.2',
+      choices: ['v1.1', 'v1.2'],
+      description: '組版ロジック。v1.2は行末の空きを減らす活字再選択を自動試行する',
+    },
+    layoutAttempts: {
+      type: 'string',
+      default: '4',
+      description: 'v1.2組版の活字再選択の最大試行回数（1-16）',
+    },
+    'layout-attempts': {
+      type: 'string',
+      description: 'v1.2組版の最大試行回数（layoutAttemptsの別名）',
+    },
+    centerPage: {
+      type: 'boolean',
+      default: false,
+      description: '基本版面をページの天地左右中央に配置する',
+    },
+    'center-page': {
+      type: 'boolean',
+      description: '基本版面を中央配置する（centerPageの別名）',
+    },
+    border: {
+      type: 'boolean',
+      default: false,
+      description: '生成画像の活字にボーダーを表示する',
+    },
+    printImageText: {
+      type: 'boolean',
+      default: false,
+      description: '生成に用いられた画像テキストをstderrへ出力する',
+    },
+    'print-image-text': {
+      type: 'boolean',
+      description: '画像テキストを出力する（printImageTextの別名）',
+    },
+    charSpacing: {
+      type: 'string',
+      default: '0',
+      description: '字間微調整（1/100文字単位）',
+    },
+    'char-spacing': {
+      type: 'string',
+      description: '字間微調整（charSpacingの別名）',
+    },
+    lineSpacing: {
+      type: 'string',
+      default: '0',
+      description: '行間微調整（1/100文字単位）',
+    },
+    'line-spacing': {
+      type: 'string',
+      description: '行間微調整（lineSpacingの別名）',
+    },
     oldJapanese: {
       type: 'boolean',
       default: false,
       description: '古文表記保持モード。kuromojiの読み変換を避け、原文表記を使う',
     },
-    'old-japanese': { type: 'boolean', description: '古文表記保持モード（oldJapaneseの別名）' },
-    kobun: { type: 'boolean', description: '古文表記保持モード（oldJapaneseの別名）' },
-    margin: { type: 'string', description: '天地左右の余白（px）。個別指定がない箇所へ適用' },
-    marginTop: { type: 'string', default: '100', description: '天の余白（px）' },
-    'margin-top': { type: 'string', description: '天の余白（marginTopの別名）' },
-    marginBottom: { type: 'string', default: '100', description: '地の余白（px）' },
-    'margin-bottom': { type: 'string', description: '地の余白（marginBottomの別名）' },
-    marginLeft: { type: 'string', default: '100', description: '左の余白（px）' },
-    'margin-left': { type: 'string', description: '左の余白（marginLeftの別名）' },
-    marginRight: { type: 'string', default: '100', description: '右の余白（px）' },
-    'margin-right': { type: 'string', description: '右の余白（marginRightの別名）' },
+    'old-japanese': {
+      type: 'boolean',
+      description: '古文表記保持モード（oldJapaneseの別名）',
+    },
+    kobun: {
+      type: 'boolean',
+      description: '古文表記保持モード（oldJapaneseの別名）',
+    },
+    margin: {
+      type: 'string',
+      description: '天地左右の余白（px）。個別指定がない箇所へ適用',
+    },
+    marginTop: {
+      type: 'string',
+      default: '100',
+      description: '天の余白（px）',
+    },
+    'margin-top': {
+      type: 'string',
+      description: '天の余白（marginTopの別名）',
+    },
+    marginBottom: {
+      type: 'string',
+      default: '100',
+      description: '地の余白（px）',
+    },
+    'margin-bottom': {
+      type: 'string',
+      description: '地の余白（marginBottomの別名）',
+    },
+    marginLeft: {
+      type: 'string',
+      default: '100',
+      description: '左の余白（px）',
+    },
+    'margin-left': {
+      type: 'string',
+      description: '左の余白（marginLeftの別名）',
+    },
+    marginRight: {
+      type: 'string',
+      default: '100',
+      description: '右の余白（px）',
+    },
+    'margin-right': {
+      type: 'string',
+      description: '右の余白（marginRightの別名）',
+    },
     height: {
       type: 'string',
       default: 'auto',
       choices: ['auto', 'fit'],
       description: '出力画像の縦幅',
     },
-    pageWidth: { type: 'string', description: 'Professional page layout width in pixels' },
+    pageWidth: {
+      type: 'string',
+      description: 'Professional page layout width in pixels',
+    },
     'page-width': {
       type: 'string',
       description: 'Professional page layout width in pixels（pageWidthの別名）',
     },
-    pageHeight: { type: 'string', description: 'Professional page layout height in pixels' },
+    pageHeight: {
+      type: 'string',
+      description: 'Professional page layout height in pixels',
+    },
     'page-height': {
       type: 'string',
       description: 'Professional page layout height in pixels（pageHeightの別名）',
@@ -164,18 +294,43 @@ const argsConfig = {
       type: 'string',
       description: '中古和文UniDic directory for --old-japanese / --kobun',
     },
-    'mecab-dic': { type: 'string', description: '中古和文UniDic directory（mecabDicの別名）' },
-    mecabCommand: { type: 'string', default: 'mecab', description: 'MeCab executable path' },
-    'mecab-command': { type: 'string', description: 'MeCab executable path（mecabCommandの別名）' },
-    fontFamily: { type: 'string', default: 'serif', description: '未登録文字のフォントファミリー' },
+    'mecab-dic': {
+      type: 'string',
+      description: '中古和文UniDic directory（mecabDicの別名）',
+    },
+    mecabCommand: {
+      type: 'string',
+      default: 'mecab',
+      description: 'MeCab executable path',
+    },
+    'mecab-command': {
+      type: 'string',
+      description: 'MeCab executable path（mecabCommandの別名）',
+    },
+    fontFamily: {
+      type: 'string',
+      default: 'serif',
+      description: '未登録文字のフォントファミリー',
+    },
     'font-family': {
       type: 'string',
       description: '未登録文字のフォントファミリー（fontFamilyの別名）',
     },
-    fontColor: { type: 'string', default: '#000000', description: '未登録文字のフォント色' },
-    'font-color': { type: 'string', description: '未登録文字のフォント色（fontColorの別名）' },
+    fontColor: {
+      type: 'string',
+      default: '#000000',
+      description: '未登録文字のフォント色',
+    },
+    'font-color': {
+      type: 'string',
+      description: '未登録文字のフォント色（fontColorの別名）',
+    },
     scale: { type: 'string', default: '1', description: '画像作成サイズ倍率' },
-    paperTexture: { type: 'string', default: '', description: '用紙テクスチャファイル名' },
+    paperTexture: {
+      type: 'string',
+      default: '',
+      description: '用紙テクスチャファイル名',
+    },
     'paper-texture': {
       type: 'string',
       description: '用紙テクスチャファイル名（paperTextureの別名）',
@@ -199,9 +354,22 @@ const argsConfig = {
       type: 'string',
       description: 'XMP/sidecar metadata timestamp（generatedAtの別名）',
     },
-    gamma: { type: 'string', default: '1', description: '出力画像へのガンマ補正（0.1-2.2）' },
-    format: { type: 'string', default: 'jpeg', choices: ['jpeg', 'png'], description: '出力形式' },
-    quality: { type: 'string', default: '0.92', description: 'JPEG品質（0-1）' },
+    gamma: {
+      type: 'string',
+      default: '1',
+      description: '出力画像へのガンマ補正（0.1-2.2）',
+    },
+    format: {
+      type: 'string',
+      default: 'jpeg',
+      choices: ['jpeg', 'png'],
+      description: '出力形式',
+    },
+    quality: {
+      type: 'string',
+      default: '0.92',
+      description: 'JPEG品質（0-1）',
+    },
   },
 } as const;
 
@@ -302,8 +470,15 @@ export function readCliOptions(): CliOptions | undefined {
     return undefined;
   }
 
-  if (typeof values.text !== 'string' || values.text === '') {
-    console.error('Specify --text <text>');
+  const useSampleText = values.sampleText === true || values['sample-text'] === true;
+  const explicitText = typeof values.text === 'string' && values.text !== '';
+  if (useSampleText && explicitText) {
+    console.error('Use either --text or --sample-text, not both');
+    return undefined;
+  }
+  const text = explicitText ? String(values.text) : useSampleText ? SAMPLE_TEXT : undefined;
+  if (text === undefined) {
+    console.error('Specify --text <text> (or --sample-text)');
     usage(argsConfig);
     return undefined;
   }
@@ -311,7 +486,12 @@ export function readCliOptions(): CliOptions | undefined {
   const gamma = parseNumber('gamma', String(values.gamma));
   assertGamma(gamma);
 
-  const seed = typeof values.seed === 'string' ? parseInteger('seed', values.seed) : undefined;
+  const explicitSeed =
+    typeof values.seed === 'string' ? parseInteger('seed', values.seed) : undefined;
+  // The Professional web UI always generates and displays a seed so the same
+  // glyph combination can be reproduced later. Negative seeds are possible.
+  const seed = explicitSeed ?? randomInt(-2147483648, 2147483648);
+  const seedGenerated = explicitSeed === undefined;
   const datasets = Array.isArray(values.datasets)
     ? values.datasets.map((item) => parseDataset(String(item)))
     : [];
@@ -329,6 +509,12 @@ export function readCliOptions(): CliOptions | undefined {
   const lineGap =
     typeof values['line-gap'] === 'string' ? values['line-gap'] : String(values.lineGap);
   const numLines = typeof values['num-lines'] === 'string' ? values['num-lines'] : values.numLines;
+  const layoutVersion = (values.layout === 'v1.1' ? 'v1.1' : 'v1.2') satisfies LayoutVersion;
+  const layoutAttemptsRaw =
+    typeof values['layout-attempts'] === 'string'
+      ? values['layout-attempts']
+      : String(values.layoutAttempts);
+  const parsedLayoutAttempts = parseInteger('layoutAttempts', layoutAttemptsRaw);
   const charSpacing =
     typeof values['char-spacing'] === 'string'
       ? values['char-spacing']
@@ -426,6 +612,7 @@ export function readCliOptions(): CliOptions | undefined {
         : new Date().toISOString();
 
   assertRange('renmenPriority', parsedRenmenPriority, 0, 1);
+  assertRange('layoutAttempts', parsedLayoutAttempts, 1, 16);
   assertAtLeast('charsPerLine', parsedCharsPerLine, 0);
   assertAtLeast('lineGap', parsedLineGap, 0);
   if (parsedNumLines !== undefined) {
@@ -447,7 +634,7 @@ export function readCliOptions(): CliOptions | undefined {
   assertRange('quality', parsedQuality, 0, 1);
 
   return {
-    text: values.text,
+    text,
     output: typeof values.output === 'string' ? values.output : undefined,
     metadataOutput,
     force: values.force === true,
@@ -469,6 +656,11 @@ export function readCliOptions(): CliOptions | undefined {
     lineSpacing: parsedLineSpacing,
     morphologyMode,
     morphologyEngine: morphologyMode === 'old-japanese' ? 'mecab-unidic-chuko' : 'kuromoji',
+    border: values.border === true,
+    centerPage: values.centerPage === true || values['center-page'] === true,
+    layoutVersion,
+    layoutAttempts: parsedLayoutAttempts,
+    printImageText: values.printImageText === true || values['print-image-text'] === true,
     mecabDictionaryPath,
     mecabCommand,
     manualPositions: parseManualPositions(manualPositionsRaw),
@@ -479,6 +671,7 @@ export function readCliOptions(): CliOptions | undefined {
     white: String(values.white),
     black: String(values.black),
     seed,
+    seedGenerated,
     generatedAt,
     gamma,
     format: format satisfies OutputFormat,

@@ -5,6 +5,7 @@ export interface DatasetConfig {
 
 export type OutputFormat = 'jpeg' | 'png';
 export type MorphologyMode = 'modern' | 'old-japanese';
+export type LayoutVersion = 'v1.1' | 'v1.2';
 
 export interface ProDirectiveBase {
   readonly position: number;
@@ -66,6 +67,8 @@ export interface SoanConfig {
   lineSpacing: number;
   morphologyMode: MorphologyMode;
   morphologyEngine: 'kuromoji' | 'mecab-unidic-chuko' | 'surface-preserving';
+  border: boolean;
+  centerPage: boolean;
   mecabDictionaryPath?: string;
   mecabCommand?: string;
   manualPositions?: readonly ManualPosition[];
@@ -83,11 +86,23 @@ export interface CliOptions extends SoanConfig {
   metadataOutput?: string;
   force: boolean;
   gamma: number;
-  seed?: number;
+  seed: number;
+  seedGenerated: boolean;
+  layoutVersion: LayoutVersion;
+  layoutAttempts: number;
+  printImageText: boolean;
   generatedAt: string;
   manualPositions: readonly ManualPosition[];
   format: OutputFormat;
   quality: number;
+}
+
+export interface LayoutMetadata {
+  readonly version: LayoutVersion;
+  readonly attempts: number;
+  readonly chosenAttempt: number;
+  readonly chosenSeed: number;
+  readonly trailingGap: number;
 }
 
 export interface GenerationMetadata {
@@ -95,8 +110,11 @@ export interface GenerationMetadata {
   readonly professionalSlice: true;
   readonly sourceText: string;
   readonly renderText: string;
-  readonly seed?: number;
+  readonly seed: number;
+  readonly seedGenerated: boolean;
   readonly gamma: number;
+  readonly layout: LayoutMetadata;
+  readonly imageText?: string;
   readonly format: OutputFormat;
   readonly directives: readonly ProDirective[];
   readonly boundaries: readonly BoundaryDirective[];
@@ -150,6 +168,8 @@ export interface SoanRenderOptions {
   canvas: CanvasLike;
   outputPath?: string;
   force: boolean;
+  border?: boolean;
+  centerPage?: boolean;
   renmenPriority?: number;
   numLines?: number;
   charSpacing?: number;

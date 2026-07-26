@@ -3,7 +3,7 @@
 [![CI](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.2.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v1.3.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](https://github.com/Kotomiya07/soan-professional/blob/main/README.ja.md)
@@ -63,11 +63,23 @@ soan \
 ## Features
 
 - full-width bracket Pro notation: `［加］な`, `［八良］ぬ`, and `［ID4867］`
+  (half-width `[]` and full-width `／` stay literal in the rendered text)
 - slash boundaries: `はな/の`
-- deterministic glyph/layout selection with `--seed`
+- deterministic glyph/layout selection with `--seed`; when omitted, a seed is
+  auto-generated and reported (`Seed: <n>` on stderr) so the same glyph
+  combination can be reproduced later
 - byte-level reproducible JPEGs when `--generated-at` is fixed
 - gamma post-processing with `--gamma`
+- v1.2 typesetting (`--layout v1.2`, default): retries deterministic glyph
+  combinations to reduce trailing line gaps; `--layout v1.1` keeps the legacy
+  single-attempt logic, `--layout-attempts` bounds the retries
 - layout controls: `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, and `--page-height`
+- `--center-page` centers the text block on the page (designed for
+  `--num-lines` with `--page-width` / `--page-height`)
+- glyph borders with `--border`
+- image text confirmation with `--print-image-text` (also recorded as
+  `imageText` in the metadata sidecar)
+- sample text rendering with `--sample-text` (Nakajima Atsushi, "Sangetsuki")
 - MeCab / Chuko-Wabun UniDic analysis with `--old-japanese` / `--kobun`
 - manual glyph offsets with `--manual-positions`
 - sidecar reproducibility metadata with `--metadata-output`
@@ -95,7 +107,7 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 ## Notes
 
-- PixiJS interactive editing is not part of the v1.2.0 CLI package.
+- PixiJS interactive editing is not part of the v1.3.0 CLI package.
 - When a Pro glyph directive is present, the compatibility renderer sets the effective `renmenPriority` to `0` for that render and records that value in metadata.
 - The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.
 

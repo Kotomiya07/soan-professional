@@ -54,6 +54,21 @@ describe('parseExtendedText', () => {
     expect(() => parseExtendedText('か［］な')).toThrow('Professional directive must not be empty');
   });
 
+  it('keeps half-width square brackets as literal escaped text', () => {
+    const parsed = parseExtendedText('[加]な');
+
+    expect(parsed.renderText).toBe('[加]な');
+    expect(parsed.directives).toEqual([]);
+    expect(parsed.boundaries).toEqual([]);
+  });
+
+  it('keeps full-width slashes as literal escaped text instead of boundaries', () => {
+    const parsed = parseExtendedText('か／な');
+
+    expect(parsed.renderText).toBe('か／な');
+    expect(parsed.boundaries).toEqual([]);
+  });
+
   it('treats a directive after another directive as another inline replacement', () => {
     const parsed = parseExtendedText('か［加］［可］');
 
