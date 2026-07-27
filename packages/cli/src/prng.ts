@@ -1,7 +1,7 @@
 import seedrandom from 'seedrandom';
 
 /**
- * seedrandom seeds from any value by hashing its string representation, but
+ * seedrandom seeds from arbitrary values by hashing the string representation, but
  * the bundled types only declare the string overload. The renderer passes the
  * numeric seed straight through, and seedrandom hashes a number differently
  * from its own string form, so the number must reach it unconverted.

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { assertGamma } from '../src/gamma.js';
 
 describe('assertGamma', () => {
-  it('accepts any positive gamma, matching the Professional API validator', () => {
+  it('accepts every positive gamma, matching the Professional API validator', () => {
     expect(() => {
       assertGamma(0.05);
     }).not.toThrow();
