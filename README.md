@@ -4,7 +4,7 @@
 [![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.3.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](./README.ja.md)
@@ -81,10 +81,16 @@ soan \
   auto-generated, reported as `Seed: <n>` on stderr, and recorded in metadata
 - Byte-level reproducible JPEG output when `--generated-at` is fixed
 - Gamma correction with `--gamma`
-- v1.2 typesetting (`--layout v1.2`, default) retries deterministic glyph
-  combinations to reduce trailing line gaps; `--layout v1.1` keeps the legacy
-  logic and `--layout-attempts` bounds the retries
+- v1.2 typesetting (`--layout v1.2`, default) uses local reselection in the
+  renderer: when a non-final line has trailing space and a glyph has multiple
+  candidates, seeded randomness selects an alternate candidate and the layout
+  is rebuilt. A pass is adopted only when total trailing gap decreases; the
+  process stops at zero gap or after `--layout-attempts` passes (default 4,
+  range 1-16). `--layout v1.1` remains a single render without reselection.
 - Layout controls: `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, and `--page-height`
+- Paper-texture layout with `--texture-image-layout-mode` and `--lines-per-page`
+  (default 10): sizes the canvas to the paper texture's natural dimensions and
+  centers the text block on it
 - Forced page sizes keep the rendered layout aligned to the top-right of the page;
   `--center-page` centers the text block on the page instead
 - Glyph borders with `--border`
@@ -99,9 +105,28 @@ soan \
 
 ## Metadata
 
-The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v1.3.0. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
+The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v2.0.0. JPEG output also receives the same Professional metadata JSON as a single APP1 XMP packet when the packet fits in one APP1 segment. If full metadata is too large, the CLI tries compact XMP; if that is still too large, it writes the JPEG and sidecar and records `xmp.embedded: false` with the reason.
+
+For v1.2 layout, the `layout` metadata has this shape:
+
+```json
+{
+  "version": "v1.2",
+  "attempts": 4,
+  "passes": 1,
+  "trailingGap": 0
+}
+```
+
+`attempts` is the configured maximum number of local reselection passes, `passes` is the number actually executed, and `trailingGap` is the final gap of the adopted layout. v1.1 records the same fields with no reselection passes.
 
 `--seed` fixes glyph/layout selection. For byte-identical JPEGs, also pass `--generated-at <ISO timestamp>` so the XMP metadata timestamp is stable.
+
+## Breaking changes in v2.0.0
+
+- v1.2 now uses renderer-local glyph reselection instead of the v1.x CLI approximation that rendered the entire document repeatedly with derived seeds.
+- Determinism is preserved for the same `--seed`, input, and options, but output is not compatible with v1.x when the seed is the same.
+- The `layout` metadata changed from `{ version, attempts, chosenAttempt, chosenSeed, trailingGap }` to `{ version, attempts, passes, trailingGap }`. `chosenAttempt` and `chosenSeed` are removed because there is one seed and no separately selected full-document attempt.
 
 ## Development
 
@@ -135,7 +160,7 @@ Release tags are published by GitHub Actions. The publish workflow creates or up
 
 ## Scope Notes
 
-- PixiJS interactive editing is outside the v1.3.0 CLI package.
+- PixiJS interactive editing is outside the v2.0.0 CLI package.
 - Pro glyph directives set the effective `renmenPriority` to `0` for that render so position-based single-glyph controls stay unambiguous.
 - `［ID］` / `［ID4867］` resolves from the configured datasets and bundled fallback images; the CLI does not provide a global dataset registry.
 

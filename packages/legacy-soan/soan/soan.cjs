@@ -29,6 +29,7 @@ requireDependency('jquery')(window);
 const Canvas = requireDependency('@napi-rs/canvas');
 const Image = Canvas.Image;
 const kuromoji = requireDependency('kuromoji');
+const seedrandom = requireDependency('seedrandom');
 const fs = require('fs');
 const { Buffer, Blob } = require('buffer');
 
@@ -36,6 +37,6 @@ const kuromojiDicPath = path.resolve(cliRequire.resolve('kuromoji'), '../../dict
 
 const soan_ = require('./soan.min.js');
 const Soan = function(config) {
-    return soan_(config || {}, {window, Image, kuromoji, kuromojiDicPath, path, fs, Canvas, Blob, Buffer});
+    return soan_(config || {}, {window, Image, kuromoji, kuromojiDicPath, path, fs, Canvas, Blob, Buffer, seedrandom});
 };
 module.exports = Soan;

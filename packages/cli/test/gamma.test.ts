@@ -1,18 +1,28 @@
 import { describe, expect, it } from 'vitest';
-import { applyGammaToRgba } from '../src/gamma.js';
+import { assertGamma } from '../src/gamma.js';
 
-describe('applyGammaToRgba', () => {
-  it('keeps alpha unchanged and adjusts RGB channels', () => {
-    const rgba = new Uint8ClampedArray([64, 128, 192, 77]);
-    const adjusted = applyGammaToRgba(rgba, 2);
-
-    expect(adjusted[3]).toBe(77);
-    expect(adjusted[0]).toBeGreaterThan(64);
-    expect(adjusted[1]).toBeGreaterThan(128);
-    expect(adjusted[2]).toBeGreaterThan(192);
+describe('assertGamma', () => {
+  it('accepts any positive gamma, matching the Professional API validator', () => {
+    expect(() => {
+      assertGamma(0.05);
+    }).not.toThrow();
+    expect(() => {
+      assertGamma(1);
+    }).not.toThrow();
+    expect(() => {
+      assertGamma(3);
+    }).not.toThrow();
   });
 
-  it('rejects gamma outside the supported Pro range', () => {
-    expect(() => applyGammaToRgba(new Uint8ClampedArray([0, 0, 0, 255]), 3)).toThrow(/gamma/);
+  it('rejects non-positive and non-finite gamma', () => {
+    expect(() => {
+      assertGamma(0);
+    }).toThrow(/gamma/);
+    expect(() => {
+      assertGamma(-1);
+    }).toThrow(/gamma/);
+    expect(() => {
+      assertGamma(Number.NaN);
+    }).toThrow(/gamma/);
   });
 });

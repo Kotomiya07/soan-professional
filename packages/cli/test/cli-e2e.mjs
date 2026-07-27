@@ -287,6 +287,25 @@ for (const name of ['deterministic-a', 'deterministic-b']) {
   ]);
 }
 
+// Intermediate renmenPriority exercises the seeded renmen-split branch, and a
+// negative seed matches the Professional UI's signed 32-bit seed range.
+for (const name of ['renmen-mid-a', 'renmen-mid-b']) {
+  run([
+    '--text',
+    'はなをみるかはこれこそ',
+    '--renmen-priority',
+    '0.5',
+    '--seed=-12345',
+    '--generated-at',
+    '2026-06-29T00:00:00.000Z',
+    '--output',
+    join(workdir, `${name}.jpg`),
+    '--metadata-output',
+    join(workdir, `${name}.json`),
+    '--force',
+  ]);
+}
+
 run([
   '--text',
   'あいうえお',
@@ -317,6 +336,42 @@ run([
   '--force',
 ]);
 
+run([
+  '--text',
+  'けふ /こそ',
+  '--kobun',
+  '--seed',
+  '3',
+  '--mecab-dic',
+  '../../assets/dictionaries/unidic-chuko-v202512',
+  '--generated-at',
+  '2026-06-29T00:00:00.000Z',
+  '--output',
+  join(workdir, 'kobun-space.jpg'),
+  '--metadata-output',
+  join(workdir, 'kobun-space.json'),
+  '--force',
+]);
+
+run([
+  '--text',
+  'はなをみるかは',
+  '--paper-texture',
+  '../images/texture.jpg',
+  '--texture-image-layout-mode',
+  '--lines-per-page',
+  '12',
+  '--seed',
+  '5',
+  '--generated-at',
+  '2026-06-29T00:00:00.000Z',
+  '--output',
+  join(workdir, 'texture-layout.png'),
+  '--metadata-output',
+  join(workdir, 'texture-layout.json'),
+  '--force',
+]);
+
 const plain = readJson('plain.json');
 const autoSeed = readJson('auto-seed.json');
 const centerBorder = readJson('center-border.json');
@@ -325,16 +380,25 @@ const boundary = readJson('boundary.json');
 const jibo = readJson('jibo-xmp.json');
 const id = readJson('id.json');
 const kobun = readJson('kobun.json');
+const kobunSpace = readJson('kobun-space.json');
 const layout = readJson('layout.json');
+const textureLayout = readJson('texture-layout.json');
 
 assert(
   plain.selectedGlyphs.map((glyph) => glyph.token).join('|') !==
     boundary.selectedGlyphs.map((glyph) => glyph.token).join('|'),
   'slash boundary did not affect glyph tokenization',
 );
-assert(jibo.renderText === 'かな', 'prefix jibo directive did not expand to render text');
+assert(
+  jibo.renderText === '［加］/な',
+  'jibo directive was not preserved as a dictionary key in render text',
+);
 assert(jibo.selectedGlyphs[0].jibo === '加', 'jibo directive was not reflected in selected glyphs');
-assert(jibo.soanConfig.renmenPriority === 0, 'effective renmenPriority override was not recorded');
+assert(
+  jibo.selectedGlyphs[0].markedupChar === 'か',
+  'jibo directive did not resolve to the kana it stands for',
+);
+assert(jibo.imageText === 'かな', 'image text did not resolve directives to their kana');
 assert(jibo.xmp.embedded === true, 'JPEG XMP was not embedded');
 const xmpNamespaceCount =
   readFileSync(join(workdir, 'jibo-xmp.jpg'), 'latin1').split('http://ns.adobe.com/xap/1.0/')
@@ -354,7 +418,41 @@ assert(
   kobun.morphologyTokens.some((token) => token.surface === 'けふ'),
   'MeCab morphology tokens were not recorded',
 );
+assert(
+  kobun.morphologyTokens.every((token) => !token.pos.includes('-')),
+  'UniDic parts of speech were not collapsed to their major category',
+);
+assert(
+  kobun.morphologyTokens.some((token) => token.surface === 'こそ' && token.line === 2),
+  'analysis-unit offsets after a slash boundary were not assigned',
+);
+assert(
+  kobun.selectedGlyphs.some((glyph) => glyph.token === 'けふ' || glyph.token === 'こそ'),
+  'kobun morphology did not reach glyph selection',
+);
+assert(
+  kobunSpace.morphologyTokens.some((token) => token.surface === 'こそ' && token.line === 2),
+  'MeCab-dropped whitespace was counted into analysis-unit offsets',
+);
+assert(
+  kobunSpace.selectedGlyphs.some((glyph) => glyph.token === 'こそ'),
+  'kobun morphology after whitespace did not reach glyph selection',
+);
+assert(
+  textureLayout.soanConfig.textureImageLayoutMode === true &&
+    textureLayout.soanConfig.linesPerPage === 12,
+  'texture layout options were not recorded',
+);
+assert(
+  textureLayout.image.width === 200 && textureLayout.image.height === 200,
+  'texture layout mode did not size the canvas to the paper texture',
+);
 assert(layout.soanConfig.numLines === 1, 'numLines was not recorded');
+assert(layout.soanConfig.linesPerPage === 10, 'default linesPerPage was not recorded');
+assert(
+  layout.soanConfig.textureImageLayoutMode === false,
+  'textureImageLayoutMode default was not recorded',
+);
 assert(layout.soanConfig.pageWidth === 600, 'pageWidth was not recorded');
 assert(layout.soanConfig.pageHeight === 900, 'pageHeight was not recorded');
 assert(layout.image.width === 720, 'scaled pageWidth was not reflected in image width');
@@ -379,6 +477,10 @@ assert(
   'same seed and generatedAt did not produce identical JPEG bytes',
 );
 assert(
+  sha256('renmen-mid-a.jpg') === sha256('renmen-mid-b.jpg'),
+  'negative seed with renmenPriority 0.5 did not reproduce identical JPEG bytes',
+);
+assert(
   Number.isInteger(autoSeed.seed) && autoSeed.seedGenerated === true,
   'auto-generated seed was not recorded in metadata',
 );
@@ -395,11 +497,16 @@ assert(
   'centered page dimensions were not applied',
 );
 assert(
-  layoutV11.layout.version === 'v1.1' && layoutV11.layout.attempts === 1,
-  'layout v1.1 did not run as a single attempt',
+  layoutV11.layout.version === 'v1.1' &&
+    layoutV11.layout.attempts === 4 &&
+    layoutV11.layout.passes === 0,
+  'layout v1.1 metadata was not recorded',
 );
 assert(
-  plain.layout.version === 'v1.2' && plain.layout.chosenSeed !== undefined,
+  plain.layout.version === 'v1.2' &&
+    plain.layout.attempts === 4 &&
+    Number.isInteger(plain.layout.passes) &&
+    typeof plain.layout.trailingGap === 'number',
   'layout v1.2 metadata was not recorded',
 );
 
@@ -409,7 +516,9 @@ for (const name of [
   'jibo-xmp.jpg',
   'id.png',
   'kobun.jpg',
+  'kobun-space.jpg',
   'layout.jpg',
+  'texture-layout.png',
   'auto-seed.jpg',
   'center-border.png',
   'layout-v11.jpg',
@@ -425,7 +534,9 @@ console.log(
       'id',
       'slash',
       'kobun',
+      'kobun-space-offsets',
       'layout',
+      'texture-layout',
       'xmp',
       'png',
       'deterministic-bytes',

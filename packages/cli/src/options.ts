@@ -1,12 +1,12 @@
-import { randomInt } from 'node:crypto';
 import { parseArgs } from 'node:util';
 import { parseArgsWithHelp, usage } from 'minus-h';
 import type { CliOptions, DatasetConfig, LayoutVersion, OutputFormat } from './types.js';
 import { assertGamma } from './gamma.js';
 import { defaultChukoDictionaryPath } from './dictionary.js';
+import { generateSeed } from './prng.js';
 import { SAMPLE_TEXT } from './sample-text.js';
 
-export const CLI_VERSION = '1.3.0';
+export const CLI_VERSION = '2.0.0';
 
 function printHelp(): void {
   console.log(`soan-professional-cli ${CLI_VERSION}
@@ -24,13 +24,16 @@ Core options:
       --metadata-output <file>      Write reproducibility metadata JSON.
       --format <jpeg|png>           Output format. Default: jpeg
       --quality <0-1>               JPEG quality. Default: 0.92
-      --seed <integer>              Deterministic rendering seed. Auto-generated and reported when omitted.
+      --seed <integer>              Seeds glyph selection. Auto-generated and reported when omitted or 0.
       --generated-at <iso>          Metadata timestamp. Fix this for byte-level reproducible XMP output.
-      --gamma <0.1-2.2>             Gamma correction. Default: 1
+      --gamma <number>              Gamma correction on the glyph layer (>0). Default: 1
       --chars-per-line <integer>    Characters per line. Default: 20
       --line-gap <number>           Line gap. Default: 0.5
       --renmen-priority <0-1>       Renmen priority. Default: 1
       --num-lines <integer>         Target number of vertical lines.
+      --lines-per-page <integer>    Lines a page reserves in texture layout mode. Default: 10
+      --texture-image-layout-mode   Size the canvas to the paper texture image and center the
+                                    text block on it (kemco-style page layout).
       --layout <v1.1|v1.2>          Typesetting logic. v1.2 retries glyph combinations to reduce
                                     trailing line gaps. Default: v1.2
       --layout-attempts <1-16>      Max glyph reselection attempts for --layout v1.2. Default: 4
@@ -71,7 +74,7 @@ Dictionary commands:
       --output <dir>                Parent directory. Default: user data directory
       --force                       Replace an existing unidic-chuko-v202512 directory.
 
-Unsupported in v1.3.0 CLI package:
+Unsupported in v2.0.0 CLI package:
   PixiJS interactive editing.
 `);
 }
@@ -166,6 +169,23 @@ const argsConfig = {
       type: 'string',
       description: 'v1.2組版の最大試行回数（layoutAttemptsの別名）',
     },
+    linesPerPage: {
+      type: 'string',
+      description: '1ページあたりの行数（1以上）',
+    },
+    'lines-per-page': {
+      type: 'string',
+      description: '1ページあたりの行数（linesPerPageの別名）',
+    },
+    textureImageLayoutMode: {
+      type: 'boolean',
+      default: false,
+      description: '用紙テクスチャ画像の実寸に基本版面を合わせて中央配置する',
+    },
+    'texture-image-layout-mode': {
+      type: 'boolean',
+      description: '用紙テクスチャ実寸に合わせる（textureImageLayoutModeの別名）',
+    },
     centerPage: {
       type: 'boolean',
       default: false,
@@ -222,12 +242,11 @@ const argsConfig = {
     },
     margin: {
       type: 'string',
-      description: '天地左右の余白（px）。個別指定がない箇所へ適用',
+      description: '天地左右の余白（1/100文字単位）。個別指定がない箇所へ適用。既定 100（=1文字）',
     },
     marginTop: {
       type: 'string',
-      default: '100',
-      description: '天の余白（px）',
+      description: '天の余白（1/100文字単位）',
     },
     'margin-top': {
       type: 'string',
@@ -235,8 +254,7 @@ const argsConfig = {
     },
     marginBottom: {
       type: 'string',
-      default: '100',
-      description: '地の余白（px）',
+      description: '地の余白（1/100文字単位）',
     },
     'margin-bottom': {
       type: 'string',
@@ -244,8 +262,7 @@ const argsConfig = {
     },
     marginLeft: {
       type: 'string',
-      default: '100',
-      description: '左の余白（px）',
+      description: '左の余白（1/100文字単位）',
     },
     'margin-left': {
       type: 'string',
@@ -253,8 +270,7 @@ const argsConfig = {
     },
     marginRight: {
       type: 'string',
-      default: '100',
-      description: '右の余白（px）',
+      description: '右の余白（1/100文字単位）',
     },
     'margin-right': {
       type: 'string',
@@ -345,7 +361,10 @@ const argsConfig = {
       default: '#000000',
       description: '古活字データセット画像の黒にマッピングする描画色',
     },
-    seed: { type: 'string', description: 'Math.random を固定する再現性シード' },
+    seed: {
+      type: 'string',
+      description: '活字選択を再現するシード（0 または省略時は自動生成して表示）',
+    },
     generatedAt: {
       type: 'string',
       description: 'XMP/sidecar metadata timestamp. 固定するとXMP込みのJPEGも再現しやすい',
@@ -357,7 +376,7 @@ const argsConfig = {
     gamma: {
       type: 'string',
       default: '1',
-      description: '出力画像へのガンマ補正（0.1-2.2）',
+      description: '活字レイヤーへのガンマ補正（0より大きい数）。用紙テクスチャ合成前に適用',
     },
     format: {
       type: 'string',
@@ -486,11 +505,14 @@ export function readCliOptions(): CliOptions | undefined {
   const gamma = parseNumber('gamma', String(values.gamma));
   assertGamma(gamma);
 
-  const explicitSeed =
+  const requestedSeed =
     typeof values.seed === 'string' ? parseInteger('seed', values.seed) : undefined;
+  // The reference implementation treats 0 as "choose one for me", so --seed 0
+  // requests a fresh seed rather than pinning the generator to zero.
+  const explicitSeed = requestedSeed === 0 ? undefined : requestedSeed;
   // The Professional web UI always generates and displays a seed so the same
   // glyph combination can be reproduced later. Negative seeds are possible.
-  const seed = explicitSeed ?? randomInt(-2147483648, 2147483648);
+  const seed = explicitSeed ?? generateSeed();
   const seedGenerated = explicitSeed === undefined;
   const datasets = Array.isArray(values.datasets)
     ? values.datasets.map((item) => parseDataset(String(item)))
@@ -509,6 +531,8 @@ export function readCliOptions(): CliOptions | undefined {
   const lineGap =
     typeof values['line-gap'] === 'string' ? values['line-gap'] : String(values.lineGap);
   const numLines = typeof values['num-lines'] === 'string' ? values['num-lines'] : values.numLines;
+  const linesPerPage =
+    typeof values['lines-per-page'] === 'string' ? values['lines-per-page'] : values.linesPerPage;
   const layoutVersion = (values.layout === 'v1.1' ? 'v1.1' : 'v1.2') satisfies LayoutVersion;
   const layoutAttemptsRaw =
     typeof values['layout-attempts'] === 'string'
@@ -588,6 +612,12 @@ export function readCliOptions(): CliOptions | undefined {
   const parsedLineGap = parseNumber('lineGap', lineGap);
   const parsedNumLines =
     typeof numLines === 'string' ? parseInteger('numLines', numLines) : undefined;
+  // The kemco-style texture layout reserves this many lines per page. The
+  // engine default is 10, matching the Professional service.
+  const parsedLinesPerPage =
+    typeof linesPerPage === 'string' ? parseInteger('linesPerPage', linesPerPage) : 10;
+  const textureImageLayoutMode =
+    values.textureImageLayoutMode === true || values['texture-image-layout-mode'] === true;
   const parsedPageWidth =
     typeof pageWidth === 'string' ? parseInteger('pageWidth', pageWidth) : undefined;
   const parsedPageHeight =
@@ -618,6 +648,7 @@ export function readCliOptions(): CliOptions | undefined {
   if (parsedNumLines !== undefined) {
     assertAtLeast('numLines', parsedNumLines, 1);
   }
+  assertAtLeast('linesPerPage', parsedLinesPerPage, 1);
   if (parsedPageWidth !== undefined) {
     assertAtLeast('pageWidth', parsedPageWidth, 1);
   }
@@ -630,7 +661,10 @@ export function readCliOptions(): CliOptions | undefined {
   assertAtLeast('marginBottom', parsedMarginBottom, 0);
   assertAtLeast('marginLeft', parsedMarginLeft, 0);
   assertAtLeast('marginRight', parsedMarginRight, 0);
-  assertAtLeast('scale', parsedScale, 0.01);
+  // The Professional API validates scale as > 0 rather than against a UI range.
+  if (!(parsedScale > 0)) {
+    throw new Error(`--scale must be greater than 0: ${parsedScale}`);
+  }
   assertRange('quality', parsedQuality, 0, 1);
 
   return {
@@ -652,6 +686,8 @@ export function readCliOptions(): CliOptions | undefined {
     pageWidth: parsedPageWidth,
     pageHeight: parsedPageHeight,
     numLines: parsedNumLines,
+    linesPerPage: parsedLinesPerPage,
+    textureImageLayoutMode,
     charSpacing: parsedCharSpacing,
     lineSpacing: parsedLineSpacing,
     morphologyMode,

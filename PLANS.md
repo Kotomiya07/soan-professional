@@ -1,5 +1,11 @@
 # そあん（soan）Professional版 移植計画
 
+## 2026-07-27 v2.0.0 局所再選択方式対応
+
+- v1.2組版を、CLIが派生seedで文書全体を再レンダリングする近似方式から、レンダラー内部の局所再選択方式へ変更した。最終行以外で空きが生じ、候補画像が複数あるglyphをseeded乱数で別候補へ差し替えて再組版し、全体の行末空き（totalGap）が減った場合だけ採用する。
+- `--layout-attempts` は設定した最大再選択パス数（既定4、範囲1-16）であり、metadataの `layout` は `version / attempts / passes / trailingGap` を記録する。`chosenAttempt` と `chosenSeed` は廃止した。
+- 同じ `--seed`・入力・オプションに対する決定性は維持するが、局所再選択方式への変更によりv1.xと同じseedの出力互換性はない。
+
 ## 2026-07-26 v1.3.0 Professional機能仕様準拠メモ
 
 `そあん（soan）プロフェッショナル版 機能仕様`（about.html 2026-07-25取得）と現状CLIを突き合わせ、未対応だった機能を実装した。
@@ -9,7 +15,7 @@
 - `--seed` 未指定時にシード値（負値もあり得る32bit整数）を自動生成し、Web UIのSeed表示に合わせて `Seed: <n>` をstderrへ出力。metadataに `seed` / `seedGenerated` を記録
 - 「画像テキスト」確認機能として `--print-image-text` を追加。生成に用いられたトークン列をhard line単位で結合した `imageText` をmetadataへ常時記録し、オプション指定時はstderrへも表示
 - 2024-04-10追加機能のボーダー表示に対応する `--border` を追加。互換レンダラーの `border` render optionへ接続
-- v1.2組版改善として `--layout <v1.1|v1.2>`（default: v1.2）と `--layout-attempts <1-16>`（default: 4）を追加。行頭禁則の追い出し等で行末に空きが出る場合、シード派生（base + attempt×1000003）の決定的な活字組み合わせを再試行し、softline末尾の空き合計（trailingGap）が最小の組を採用する。attempt 0はbase seedそのままなので `--layout v1.1` は従来出力を再現する。`--num-lines` 指定時は行数を満たす試行を優先。metadataに `layout`（version / attempts / chosenAttempt / chosenSeed / trailingGap）を記録
+- v1.2組版改善として `--layout <v1.1|v1.2>`（default: v1.2）と `--layout-attempts <1-16>`（default: 4）を追加。レンダラー内部で、最終行以外に空きがあり候補画像が複数あるglyphをseeded乱数で別候補へ局所的に差し替えて再組版し、全体の行末空き（totalGap）が減った場合だけ採用する。空きが0になるか、最大 `--layout-attempts` 回の再選択パスを実行すると終了する。`--layout v1.1` は従来どおり再選択なしの単一レンダリング。metadataの `layout` は `version / attempts / passes / trailingGap` を記録する。
 - kemco特設ページ向け中央レイアウトとして `--center-page` を追加。`soan.min.js` の `be()` にcenterPage optionを実装し、右寄せgapの半分を水平offsetに、`pageHeight - margin - 版面高さ` の半分を垂直offsetに使って基本版面を紙面の天地左右中央に配置する
 - Web UIの「サンプルテキスト」ボタン相当として `--sample-text`（中島敦『山月記』冒頭、パブリックドメイン）を追加。`--text` との同時指定はエラー
 - エスケープ仕様（半角 `[]` と全角 `／` はdirective扱いせずそのまま画像テキストに残る）をparserテストで固定
@@ -22,13 +28,12 @@
 - seed自動生成: `--seed` 未指定で `Seed:` stderr表示と `seedGenerated: true` を確認
 - `--print-image-text`: 「か/な」で `Image text: かな` を確認
 - `--border --center-page --page-width 800 --page-height 1200 --num-lines 2`: ボーダー描画と版面の中央配置をmetadata座標と生成PNG目視で確認
-- `--layout v1.1` vs `--layout v1.2`（27字・字詰7）: v1.1 trailingGap 708 / 5行に対し、v1.2はattempt 1を採用し trailingGap 21 / 4行へ改善
+- `--layout v1.1` vs `--layout v1.2`（27字・字詰7）: v1.1 trailingGap 708 / 5行に対し、v1.2は局所再選択パスを実行し trailingGap 21 / 4行へ改善
 - `--sample-text --allow-unavailable-char`: 『山月記』冒頭106 glyphの生成を確認
 - `test/cli-e2e.mjs` に auto-seed / image-text / border-center / layout-versions ケースを追加（実datasetを使うe2eはローカル環境での `pixi run check` 実行を想定）
 
 現時点の制限:
 
-- v1.2組版の再試行は互換レンダラーを複数回実行して最良結果を選ぶ方式であり、行内での部分的な活字再選択ではない
 - `--center-page` の垂直centeringは版面高さの近似（行ごとの活字高さ合計の最大値）に基づく
 
 ## 2026-06-29 実装開始メモ

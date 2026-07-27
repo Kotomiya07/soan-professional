@@ -3,7 +3,7 @@
 [![CI](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/ci.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.3.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![日本語](https://img.shields.io/badge/README-%E6%97%A5%E6%9C%AC%E8%AA%9E-blue)](https://github.com/Kotomiya07/soan-professional/blob/main/README.ja.md)
@@ -70,10 +70,16 @@ soan \
   combination can be reproduced later
 - byte-level reproducible JPEGs when `--generated-at` is fixed
 - gamma post-processing with `--gamma`
-- v1.2 typesetting (`--layout v1.2`, default): retries deterministic glyph
-  combinations to reduce trailing line gaps; `--layout v1.1` keeps the legacy
-  single-attempt logic, `--layout-attempts` bounds the retries
+- v1.2 typesetting (`--layout v1.2`, default) uses local reselection in the
+  renderer: when a non-final line has trailing space and a glyph has multiple
+  candidates, seeded randomness selects an alternate candidate and the layout
+  is rebuilt. A pass is adopted only when total trailing gap decreases; the
+  process stops at zero gap or after `--layout-attempts` passes (default 4,
+  range 1-16). `--layout v1.1` remains a single render without reselection.
 - layout controls: `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, and `--page-height`
+- paper-texture layout with `--texture-image-layout-mode` and
+  `--lines-per-page` (default 10): sizes the canvas to the paper texture's
+  natural dimensions and centers the text block on it
 - `--center-page` centers the text block on the page (designed for
   `--num-lines` with `--page-width` / `--page-height`)
 - glyph borders with `--border`
@@ -84,6 +90,29 @@ soan \
 - manual glyph offsets with `--manual-positions`
 - sidecar reproducibility metadata with `--metadata-output`
 - JPEG XMP embedding and PNG output
+
+## Metadata
+
+The sidecar JSON written by `--metadata-output` is the canonical reproducibility record for v2.0.0. JPEG output also receives the same Professional metadata as APP1 XMP when it fits.
+
+For v1.2 layout, the `layout` metadata has this shape:
+
+```json
+{
+  "version": "v1.2",
+  "attempts": 4,
+  "passes": 1,
+  "trailingGap": 0
+}
+```
+
+`attempts` is the configured maximum number of local reselection passes, `passes` is the number actually executed, and `trailingGap` is the final gap of the adopted layout. `--layout v1.1` records the same fields with no reselection passes.
+
+## Breaking changes in v2.0.0
+
+- v1.2 now uses renderer-local glyph reselection instead of the v1.x CLI approximation that rendered the entire document repeatedly with derived seeds.
+- Determinism is preserved for the same `--seed`, input, and options, but output is not compatible with v1.x when the seed is the same.
+- The `layout` metadata changed from `{ version, attempts, chosenAttempt, chosenSeed, trailingGap }` to `{ version, attempts, passes, trailingGap }`. `chosenAttempt` and `chosenSeed` are removed because there is one seed and no separately selected full-document attempt.
 
 ## Development
 
@@ -107,7 +136,7 @@ Release tags are published by GitHub Actions. npm publication uses npm Trusted P
 
 ## Notes
 
-- PixiJS interactive editing is not part of the v1.3.0 CLI package.
+- PixiJS interactive editing is not part of the v2.0.0 CLI package.
 - When a Pro glyph directive is present, the compatibility renderer sets the effective `renmenPriority` to `0` for that render and records that value in metadata.
 - The CLI package is MIT licensed. Chuko-Wabun UniDic is distributed separately under CC BY-NC-SA 4.0.
 

@@ -1,8 +1,5 @@
 import { createRequire } from 'node:module';
-import { createCanvas, loadImage } from '@napi-rs/canvas';
-import { applyGammaToRgba } from './gamma.js';
-import { countSoftLines, deriveAttemptSeed, measureTrailingGap } from './layout.js';
-import { withSeededMathRandom } from './prng.js';
+import { createCanvas } from '@napi-rs/canvas';
 import type {
   CanvasLike,
   CliOptions,
@@ -11,7 +8,6 @@ import type {
   SoanFactory,
   SoanInstance,
   SoanRenderOptions,
-  SoanRenderResult,
 } from './types.js';
 
 const require = createRequire(import.meta.url);
@@ -44,6 +40,8 @@ function soanConfigFromOptions(options: CliOptions) {
     pageWidth: options.pageWidth,
     pageHeight: options.pageHeight,
     numLines: options.numLines,
+    linesPerPage: options.linesPerPage,
+    textureImageLayoutMode: options.textureImageLayoutMode,
     charSpacing: options.charSpacing,
     lineSpacing: options.lineSpacing,
     morphologyMode: options.morphologyMode,
@@ -57,6 +55,10 @@ function soanConfigFromOptions(options: CliOptions) {
     paperTexture: options.paperTexture,
     white: options.white,
     black: options.black,
+    // The reference implementation gamma-corrects the glyph layer before the
+    // paper texture is composited, so gamma belongs to the render config
+    // rather than to a post-processing pass over the encoded image.
+    gamma: options.gamma,
   };
 }
 
@@ -67,38 +69,19 @@ function encodeCanvas(canvas: CanvasLike, format: 'jpeg' | 'png', quality: numbe
   return canvas.toBuffer('image/jpeg', { quality });
 }
 
-async function applyGammaToBuffer(
-  buffer: Buffer,
-  format: 'jpeg' | 'png',
-  quality: number,
-  gamma: number,
-): Promise<Buffer> {
-  if (gamma === 1) {
-    return buffer;
-  }
-
-  const image = await loadImage(buffer);
-  const canvas = createCanvas(image.width, image.height);
-  const context = canvas.getContext('2d');
-  context.drawImage(image, 0, 0);
-
-  const imageData = context.getImageData(0, 0, canvas.width, canvas.height);
-  applyGammaToRgba(imageData.data, gamma);
-  context.putImageData(imageData, 0, 0);
-
-  return encodeCanvas(canvas, format, quality);
-}
-
-export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): SoanRenderOptions {
-  const hasForcedGlyph = metadata.directives.length > 0;
+export function soanRenderOptionsFromMetadata(
+  metadata: GenerationMetadata,
+  seed?: number,
+): SoanRenderOptions {
   return {
     canvas: createCanvas(1, 1),
     force: true,
-    // Forced glyph directives are position-based. The compatibility engine can
-    // choose multi-character renmen tokens before final glyph selection, so
-    // directive-bearing renders use single-character preference to keep those
-    // positions addressable without a full selector rewrite.
-    renmenPriority: hasForcedGlyph ? 0 : metadata.soanConfig.renmenPriority,
+    // The renderer seeds only glyph-candidate selection, matching the reference
+    // implementation; paper texture placement stays unseeded.
+    seed,
+    // ［字母］/［IDn］ resolve as dictionary keys, so renmen selection stays
+    // active alongside directives exactly as in the reference implementation.
+    renmenPriority: metadata.soanConfig.renmenPriority,
     numLines: metadata.soanConfig.numLines,
     charSpacing: metadata.soanConfig.charSpacing,
     lineSpacing: metadata.soanConfig.lineSpacing,
@@ -109,85 +92,16 @@ export function soanRenderOptionsFromMetadata(metadata: GenerationMetadata): Soa
     border: metadata.soanConfig.border,
     centerPage: metadata.soanConfig.centerPage,
     manualPositions: metadata.manualPositions,
-    professionalDirectives: metadata.directives,
-    professionalBoundaries: metadata.boundaries,
+    layoutVersion: metadata.layout.version,
+    layoutAttempts: metadata.layout.attempts,
   };
 }
 
 async function renderWithSoan(soan: SoanInstance, metadata: GenerationMetadata, seed: number) {
-  return withSeededMathRandom(seed, () =>
-    soan.getTextImageFromTextPromise(metadata.renderText, soanRenderOptionsFromMetadata(metadata)),
+  return soan.getTextImageFromTextPromise(
+    metadata.renderText,
+    soanRenderOptionsFromMetadata(metadata, seed),
   );
-}
-
-interface LayoutAttempt {
-  readonly attempt: number;
-  readonly seed: number;
-  readonly renderResult: SoanRenderResult;
-  readonly trailingGap: number;
-  readonly softLines: number;
-}
-
-/**
- * v1.2 typesetting: retry deterministic seed-derived glyph combinations and
- * keep the attempt with the smallest trailing line gap. Attempt 0 uses the
- * base seed, so --layout v1.1 (single attempt) reproduces historical output.
- */
-async function renderBestLayout(
-  soan: SoanInstance,
-  metadata: GenerationMetadata,
-  options: CliOptions,
-): Promise<{ best: LayoutAttempt; attemptsRun: number }> {
-  const maxAttempts = options.layoutVersion === 'v1.2' ? options.layoutAttempts : 1;
-  let best: LayoutAttempt | undefined;
-  let attemptsRun = 0;
-
-  for (let attempt = 0; attempt < maxAttempts; attempt += 1) {
-    attemptsRun = attempt + 1;
-    const seed = deriveAttemptSeed(options.seed, attempt);
-    const renderResult = await renderWithSoan(soan, metadata, seed);
-    const candidate: LayoutAttempt = {
-      attempt,
-      seed,
-      renderResult,
-      trailingGap: measureTrailingGap(renderResult.result),
-      softLines: countSoftLines(renderResult.result),
-    };
-
-    if (best === undefined || isBetterLayout(candidate, best, options.numLines)) {
-      best = candidate;
-    }
-
-    const satisfiesNumLines =
-      options.numLines === undefined || candidate.softLines === options.numLines;
-    if (candidate.trailingGap === 0 && satisfiesNumLines) {
-      break;
-    }
-    if (candidate.softLines <= 1 && options.numLines === undefined) {
-      // A single-line layout has no trailing line gap to reduce.
-      break;
-    }
-  }
-
-  if (best === undefined) {
-    throw new Error('Layout rendering produced no attempts');
-  }
-  return { best, attemptsRun };
-}
-
-function isBetterLayout(
-  candidate: LayoutAttempt,
-  best: LayoutAttempt,
-  numLines: number | undefined,
-): boolean {
-  if (numLines !== undefined) {
-    const candidateSatisfies = candidate.softLines === numLines;
-    const bestSatisfies = best.softLines === numLines;
-    if (candidateSatisfies !== bestSatisfies) {
-      return candidateSatisfies;
-    }
-  }
-  return candidate.trailingGap < best.trailingGap;
 }
 
 function createSoanQuietly(options: CliOptions): SoanInstance | undefined {
@@ -225,17 +139,16 @@ export async function generateImage(
     throw new Error('Failed to initialize Soan');
   }
 
-  const { best: bestAttempt, attemptsRun } = await renderBestLayout(soan, metadata, options);
-  const renderResult = bestAttempt.renderResult;
+  const renderResult = await renderWithSoan(soan, metadata, options.seed);
   const canvas = renderResult.opt.canvas;
+  const layoutStats = renderResult.opt.layoutStats ?? { passes: 0, trailingGap: 0 };
 
   // The CLI owns Professional metadata injection after rendering. Encoding
   // directly avoids producing an upstream Soan XMP segment plus a second CLI
-  // XMP segment in the same JPEG.
-  const baseBuffer = encodeCanvas(canvas, options.format, options.quality);
-
+  // XMP segment in the same JPEG. Gamma is already applied by the renderer to
+  // the glyph layer before paper compositing, so there is no re-encode here.
   return {
-    buffer: await applyGammaToBuffer(baseBuffer, options.format, options.quality, options.gamma),
+    buffer: encodeCanvas(canvas, options.format, options.quality),
     renderedGlyphs: renderResult.result,
     image: {
       width: canvas.width ?? 0,
@@ -243,10 +156,9 @@ export async function generateImage(
     },
     layout: {
       version: options.layoutVersion,
-      attempts: attemptsRun,
-      chosenAttempt: bestAttempt.attempt,
-      chosenSeed: bestAttempt.seed,
-      trailingGap: bestAttempt.trailingGap,
+      attempts: options.layoutAttempts,
+      passes: layoutStats.passes,
+      trailingGap: layoutStats.trailingGap,
     },
   };
 }

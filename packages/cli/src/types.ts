@@ -45,6 +45,8 @@ export interface ManualPosition {
 export interface ParsedExtendedText {
   readonly sourceText: string;
   readonly renderText: string;
+  /** Rendered glyph count, counting each ［...］ token as one glyph. */
+  readonly glyphCount: number;
   readonly directives: readonly ProDirective[];
   readonly boundaries: readonly BoundaryDirective[];
 }
@@ -54,6 +56,8 @@ export interface SoanConfig {
   allowUnavailableChar: boolean;
   renmenPriority: number;
   charsPerLine: number;
+  linesPerPage: number;
+  textureImageLayoutMode: boolean;
   lineGap: number;
   marginTop: number;
   marginBottom: number;
@@ -99,9 +103,16 @@ export interface CliOptions extends SoanConfig {
 
 export interface LayoutMetadata {
   readonly version: LayoutVersion;
+  /** Configured maximum number of local reselection passes. */
   readonly attempts: number;
-  readonly chosenAttempt: number;
-  readonly chosenSeed: number;
+  /** Number of local reselection passes executed by the renderer. */
+  readonly passes: number;
+  /** Trailing gap of the renderer's adopted layout. */
+  readonly trailingGap: number;
+}
+
+export interface LayoutStats {
+  readonly passes: number;
   readonly trailingGap: number;
 }
 
@@ -142,6 +153,10 @@ export interface SoanRenderedGlyph {
   readonly available: boolean;
   readonly isFallback: boolean;
   readonly jibo?: string;
+  /** Kana the glyph stands for, when the token was a ［字母］/［IDn］ alias. */
+  readonly markedupChar?: string;
+  /** Glyph image id, assigned from the dataset load order (index + 1). */
+  readonly glyphId?: number;
   readonly x?: number;
   readonly y?: number;
   readonly width?: number;
@@ -150,7 +165,6 @@ export interface SoanRenderedGlyph {
 
 export interface SelectedGlyphMetadata extends SoanRenderedGlyph {
   readonly position: number;
-  readonly glyphId?: number;
 }
 
 export interface ImageMetadata {
@@ -179,17 +193,18 @@ export interface SoanRenderOptions {
   pageWidth?: number;
   pageHeight?: number;
   manualPositions?: readonly ManualPosition[];
-  professionalDirectives?: readonly ProDirective[];
-  professionalBoundaries?: readonly BoundaryDirective[];
+  /** Seeds glyph selection. A falsy value makes the renderer generate one. */
+  seed?: number;
+  /** Written back by the renderer with the seed it actually used. */
+  usedSeed?: number;
+  layoutVersion?: LayoutVersion;
+  layoutAttempts?: number;
+  layoutStats?: LayoutStats;
 }
 
 export interface SoanRenderResult {
   text: string;
-  opt: {
-    canvas: CanvasLike;
-    outputPath?: string;
-    force?: boolean;
-  };
+  opt: SoanRenderOptions;
   result: SoanRenderedGlyph[];
 }
 

@@ -4,7 +4,7 @@
 [![Publish](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml/badge.svg)](https://github.com/Kotomiya07/soan-professional/actions/workflows/publish.yml)
 [![npm version](https://img.shields.io/npm/v/soan-professional-cli.svg?label=npm)](https://www.npmjs.com/package/soan-professional-cli)
 ![Node.js](https://img.shields.io/badge/node-%3E%3D20-339933)
-![CLI release](https://img.shields.io/badge/release-v1.3.0-2563eb)
+![CLI release](https://img.shields.io/badge/release-v2.0.0-2563eb)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 ![Dictionary license](https://img.shields.io/badge/dictionary-CC%20BY--NC--SA%204.0-orange)
 [![English](https://img.shields.io/badge/README-English-blue)](./README.md)
@@ -79,8 +79,9 @@ soan \
 - `--seed` によるglyph / layout選択の再現性。未指定時はシード値を自動生成し、`Seed: <n>` としてstderrへ表示・metadataへ記録
 - `--generated-at` 固定時のbyte-level reproducible JPEG
 - `--gamma` によるガンマ補正
-- `--layout v1.2`（デフォルト）: 行末の空きを減らす活字組み合わせの自動再試行。`--layout v1.1` で旧ロジック、`--layout-attempts` で試行回数を制御
+- `--layout v1.2`（デフォルト）: レンダラー内部の局所再選択方式。最終行以外で行末に空きがあり、候補画像が複数あるglyphをseeded乱数で別候補に差し替えて再組版し、全体の行末空き（`totalGap`）が減った場合だけ採用します。空きが0になるか、`--layout-attempts`（既定4、範囲1-16）の再選択パスを実行すると終了します。`--layout v1.1` は従来どおり再選択なしの単一レンダリングです。
 - `--num-lines`, `--char-spacing`, `--line-spacing`, `--page-width`, `--page-height` による組版制御
+- `--texture-image-layout-mode` と `--lines-per-page`（デフォルト10）による用紙テクスチャ実寸レイアウト。canvasをテクスチャ画像の実寸にし、基本版面を中央配置します
 - 画像サイズを明示指定した場合、生成内容はページ右上に揃えます。`--center-page` 指定時は基本版面をページの天地左右中央に配置します
 - `--border` による活字ボーダー表示
 - `--print-image-text` による画像テキスト（生成に用いられたテキスト）の確認。metadataにも `imageText` として記録
@@ -94,9 +95,28 @@ soan \
 
 ## メタデータ
 
-`--metadata-output` のsidecar JSONがv1.3.0のcanonical reproducibility recordです。JPEGには同じProfessional metadata JSONを単一のAPP1 XMP packetとして埋め込みます。XMPがJPEG APP1のサイズ上限を超える場合はcompact XMPを試し、それでも大きい場合はJPEGとsidecarを出力したうえで `xmp.embedded: false` と理由を記録します。
+`--metadata-output` のsidecar JSONがv2.0.0のcanonical reproducibility recordです。JPEGには同じProfessional metadata JSONを単一のAPP1 XMP packetとして埋め込みます。XMPがJPEG APP1のサイズ上限を超える場合はcompact XMPを試し、それでも大きい場合はJPEGとsidecarを出力したうえで `xmp.embedded: false` と理由を記録します。
 
-`--seed` はglyph / layout選択を再現するための値です。JPEG bytesまで固定したい場合は、XMPに入るtimestampも変化しないように `--generated-at <ISO timestamp>` を指定してください。
+v1.2組版の `layout` metadataは次の形式です。
+
+```json
+{
+  "version": "v1.2",
+  "attempts": 4,
+  "passes": 1,
+  "trailingGap": 0
+}
+```
+
+`attempts` は設定した局所再選択パスの最大数、`passes` は実際に実行した再選択パス数、`trailingGap` は採用レイアウトの最終行空きです。`--layout v1.1` でも同じフィールドを記録し、再選択パスは実行しません。
+
+`--seed` はglyph / layout選択を再現するための値です。同じ入力・オプションでも、v1.xとv2.0.0では同じseedの出力は一致しません。JPEG bytesまで固定したい場合は、XMPに入るtimestampも変化しないように `--generated-at <ISO timestamp>` を指定してください。
+
+## v2.0.0の破壊的変更
+
+- v1.2組版は、CLIが派生seedで文書全体を繰り返し再レンダリングするv1.xの近似方式から、レンダラー内部の局所再選択方式へ変更されました。
+- 同じ `--seed`、入力、オプションに対する決定性は維持されますが、同じseedでもv1.xとの出力互換性はありません。
+- `layout` metadataは旧 `{ version, attempts, chosenAttempt, chosenSeed, trailingGap }` から新 `{ version, attempts, passes, trailingGap }` に変更されました。単一seedで動作し、文書全体の試行を別途選択しないため、`chosenAttempt` と `chosenSeed` は廃止されました。
 
 ## 開発
 
@@ -130,7 +150,7 @@ release tagの公開はGitHub Actionsで行います。publish workflowは対応
 
 ## スコープ
 
-- PixiJS interactive editingはv1.3.0 CLI packageの範囲外です。
+- PixiJS interactive editingはv2.0.0 CLI packageの範囲外です。
 - Pro glyph指示があるレンダリングでは、位置指定を曖昧にしないため、その実行に限って実効 `renmenPriority` を `0` にします。
 - `［ID］` / `［ID4867］` は設定済みdatasetと同梱fallback画像から解決します。CLIはglobal dataset registryを提供しません。
 

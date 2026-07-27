@@ -39,26 +39,17 @@ Options:
 `);
 }
 
-function glyphIdFromUrl(url: string): number | undefined {
-  const fallbackMatch = url.match(/(?:^|\/)(\d+)-/);
-  if (fallbackMatch !== null) {
-    return Number.parseInt(fallbackMatch[1], 10);
-  }
-
-  const codhMatch = url.match(/_(\d+)\.[a-z]+$/i);
-  return codhMatch === null ? undefined : Number.parseInt(codhMatch[1], 10);
-}
-
+/**
+ * Glyph positions count each token as its character length so that they line up
+ * with the render text. A ［字母］ alias token therefore advances by the bracket
+ * form's length, exactly as it appears in the text.
+ */
 function selectedGlyphsFromRenderedGlyphs(
   renderedGlyphs: readonly SoanRenderedGlyph[],
 ): readonly SelectedGlyphMetadata[] {
   let position = 0;
   return renderedGlyphs.map((glyph) => {
-    const selectedGlyph = {
-      ...glyph,
-      position,
-      glyphId: glyphIdFromUrl(glyph.url),
-    };
+    const selectedGlyph = { ...glyph, position };
     position += Array.from(glyph.token).length;
     return selectedGlyph;
   });
@@ -67,11 +58,17 @@ function selectedGlyphsFromRenderedGlyphs(
 function imageTextFromSelectedGlyphs(selectedGlyphs: readonly SelectedGlyphMetadata[]): string {
   const lines = new Map<number, string[]>();
   for (const glyph of selectedGlyphs) {
+    // The Professional "画像テキスト" reports the characters the glyphs stand
+    // for, so ［字母］/［IDn］ aliases resolve to their kana via markedupChar.
+    const text =
+      glyph.markedupChar !== undefined && glyph.markedupChar !== ''
+        ? glyph.markedupChar
+        : glyph.token;
     const tokens = lines.get(glyph.line);
     if (tokens === undefined) {
-      lines.set(glyph.line, [glyph.token]);
+      lines.set(glyph.line, [text]);
     } else {
-      tokens.push(glyph.token);
+      tokens.push(text);
     }
   }
   return [...lines.entries()]
@@ -189,10 +186,7 @@ async function main(): Promise<void> {
           dictionaryPath: effectiveOptions.mecabDictionaryPath ?? '',
         })
       : undefined;
-  const soanConfig = {
-    ...soanConfigFromOptions(effectiveOptions),
-    renmenPriority: parsed.directives.length > 0 ? 0 : effectiveOptions.renmenPriority,
-  };
+  const soanConfig = soanConfigFromOptions(effectiveOptions);
   // The Professional web UI displays the seed with the generated image so the
   // same glyph combination can be reproduced. stderr keeps stdout data URLs clean.
   console.error(`Seed: ${options.seed}`);
@@ -205,9 +199,8 @@ async function main(): Promise<void> {
     seedGenerated: options.seedGenerated,
     layout: {
       version: options.layoutVersion,
-      attempts: 0,
-      chosenAttempt: 0,
-      chosenSeed: options.seed,
+      attempts: options.layoutAttempts,
+      passes: 0,
       trailingGap: 0,
     },
     gamma: options.gamma,

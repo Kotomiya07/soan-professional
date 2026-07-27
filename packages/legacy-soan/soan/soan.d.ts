@@ -16,27 +16,6 @@ declare namespace Soan {
     toBuffer(mimeType?: string, config?: unknown): Buffer;
   }
 
-  interface ProDirectiveBase {
-    readonly position: number;
-    readonly raw: string;
-  }
-
-  interface JiboDirective extends ProDirectiveBase {
-    readonly kind: 'jibo';
-    readonly jibo: string;
-  }
-
-  interface IdDirective extends ProDirectiveBase {
-    readonly kind: 'id';
-    readonly id: number;
-  }
-
-  type ProDirective = JiboDirective | IdDirective;
-
-  interface BoundaryDirective {
-    readonly position: number;
-  }
-
   interface MorphologyToken {
     readonly line: number;
     readonly surface: string;
@@ -92,6 +71,10 @@ declare namespace Soan {
     black?: string;
     /** Professional: 目標行数。互換CLIでは達成後検証される。 */
     numLines?: number;
+    /** Professional: 用紙レイアウト時に1ページが確保する行数。default: 10 */
+    linesPerPage?: number;
+    /** Professional: 用紙テクスチャ実寸にキャンバスを合わせ基本版面を中央配置する。default: false */
+    textureImageLayoutMode?: boolean;
     /** Professional: 字間微調整（1/100文字単位）。 */
     charSpacing?: number;
     /** Professional: 行間微調整（1/100文字単位）。 */
@@ -102,6 +85,17 @@ declare namespace Soan {
     professionalMorphologyTokens?: readonly MorphologyToken[];
     /** Professional: glyphごとの手動位置調整。 */
     manualPositions?: readonly ManualPosition[];
+    /** 組版アルゴリズムの互換バージョン。default: 'v1.1' */
+    layoutVersion?: 'v1.1' | 'v1.2';
+    /** v1.2局所再選択の最大試行パス数。default: 4 */
+    layoutAttempts?: number;
+    /** v1.2局所再選択の実行統計。 */
+    layoutStats?: LayoutStats;
+  }
+
+  interface LayoutStats {
+    readonly passes: number;
+    readonly trailingGap: number;
   }
 
   interface RenderOptions extends SoanConfig {
@@ -113,10 +107,6 @@ declare namespace Soan {
     outputPath?: string;
     /** 出力先に同名ファイルがあるときも上書きする */
     force?: boolean;
-    /** Professional: 位置に紐づく字母/ID直接指定 */
-    professionalDirectives?: readonly ProDirective[];
-    /** Professional: 手動形態素境界 */
-    professionalBoundaries?: readonly BoundaryDirective[];
     /** Professional: 生成画像に活字ボーダーを描画する */
     border?: boolean;
     /** デバッグ描画（ボーダー・基本版面ガイド） */
@@ -139,6 +129,10 @@ declare namespace Soan {
     readonly available: boolean;
     readonly isFallback: boolean;
     readonly jibo?: string;
+    /** Professional: ［字母］/［IDn］指定時に、その字母が表す仮名 */
+    readonly markedupChar?: string;
+    /** Professional: 古活字画像ID（データセット読み込み順、index + 1） */
+    readonly glyphId?: number;
     readonly x?: number;
     readonly y?: number;
     readonly width?: number;

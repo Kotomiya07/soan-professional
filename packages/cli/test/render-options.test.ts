@@ -6,15 +6,14 @@ function metadataFixture(): GenerationMetadata {
   return {
     engine: 'soan-v1.1.0-compat',
     professionalSlice: true,
-    sourceText: 'N［15338］/O',
-    renderText: 'NO',
+    sourceText: 'な［15338］/の',
+    renderText: 'な［ID15338］/の',
     seed: 42,
     seedGenerated: false,
     layout: {
       version: 'v1.2',
-      attempts: 0,
-      chosenAttempt: 0,
-      chosenSeed: 42,
+      attempts: 4,
+      passes: 0,
       trailingGap: 0,
     },
     gamma: 1,
@@ -27,6 +26,8 @@ function metadataFixture(): GenerationMetadata {
       allowUnavailableChar: false,
       renmenPriority: 1,
       charsPerLine: 20,
+      linesPerPage: 10,
+      textureImageLayoutMode: false,
       lineGap: 0.5,
       marginTop: 100,
       marginBottom: 100,
@@ -51,19 +52,21 @@ function metadataFixture(): GenerationMetadata {
 }
 
 describe('soanRenderOptionsFromMetadata', () => {
-  it('passes Professional directives and boundaries to the Soan compatibility renderer', () => {
+  it('maps the recorded Soan configuration onto compatibility renderer options', () => {
     const metadata = metadataFixture();
     const options = soanRenderOptionsFromMetadata(metadata);
 
-    expect(options.professionalDirectives).toBe(metadata.directives);
-    expect(options.professionalBoundaries).toBe(metadata.boundaries);
-    expect(options.renmenPriority).toBe(0);
+    // Bracket directives resolve as dictionary keys during tokenization, so the
+    // renderer needs no directive list and renmen stays enabled.
+    expect(options.renmenPriority).toBe(1);
     expect(options.numLines).toBe(3);
     expect(options.charSpacing).toBe(20);
     expect(options.lineSpacing).toBe(30);
     expect(options.morphologyMode).toBe('old-japanese');
     expect(options.border).toBe(true);
     expect(options.centerPage).toBe(true);
+    expect(options.layoutVersion).toBe('v1.2');
+    expect(options.layoutAttempts).toBe(4);
     expect(options.force).toBe(true);
   });
 });
